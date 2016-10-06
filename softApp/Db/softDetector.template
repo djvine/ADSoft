@@ -19,71 +19,71 @@ record(bi, "$(P)$(R)arrayMode")
 
 record(waveform, "$(P)$(R)arrayInInt8")
 {
-    field(DTYP, "asynInt8ArrayIn")
+    field(DTYP, "asynInt8ArrayOut")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_INT8")
-    field(NELM, "$(NCHANS)")
+    field(NELM, "$(NELEMENTS)")
     field(FTVL, "CHAR")
     field(SCAN, "I/O Intr")
 }
 
 record(waveform, "$(P)$(R)arrayInUInt8")
 {
-    field(DTYP, "asynInt8ArrayIn")
+    field(DTYP, "asynInt8ArrayOut")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_UINT8")
-    field(NELM, "$(NCHANS)")
+    field(NELM, "$(NELEMENTS)")
     field(FTVL, "UCHAR")
     field(SCAN, "I/O Intr")
 }
 
 record(waveform, "$(P)$(R)arrayInInt16")
 {
-    field(DTYP, "asynInt16ArrayIn")
+    field(DTYP, "asynInt16ArrayOut")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_INT16")
-    field(NELM, "$(NCHANS)")
+    field(NELM, "$(NELEMENTS)")
     field(FTVL, "SHORT")
     field(SCAN, "I/O Intr")
 }
 
 record(waveform, "$(P)$(R)arrayInUInt16")
 {
-    field(DTYP, "asynInt16ArrayIn")
+    field(DTYP, "asynInt16ArrayOut")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_UINT16")
-    field(NELM, "$(NCHANS)")
+    field(NELM, "$(NELEMENTS)")
     field(FTVL, "USHORT")
     field(SCAN, "I/O Intr")
 }
 
 record(waveform, "$(P)$(R)arrayInInt32")
 {
-    field(DTYP, "asynInt32ArrayIn")
+    field(DTYP, "asynInt32ArrayOut")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_INT32")
-    field(NELM, "$(NCHANS)")
+    field(NELM, "$(NELEMENTS)")
     field(FTVL, "LONG")
     field(SCAN, "I/O Intr")
 }
 
 record(waveform, "$(P)$(R)arrayInUInt32")
 {
-    field(DTYP, "asynInt32ArrayIn")
+    field(DTYP, "asynInt32ArrayOut")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_UINT32")
-    field(NELM, "$(NCHANS)")
+    field(NELM, "$(NELEMENTS)")
     field(FTVL, "ULONG")
     field(SCAN, "I/O Intr")
 }
 
 record(waveform, "$(P)$(R)arrayInFloat32")
 {
-    field(DTYP, "asynFloat32ArrayIn")
+    field(DTYP, "asynFloat32ArrayOut")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_FLOAT32")
-    field(NELM, "$(NCHANS)")
+    field(NELM, "$(NELEMENTS)")
     field(FTVL, "FLOAT")
     field(SCAN, "I/O Intr")
 }
 record(waveform, "$(P)$(R)arrayInFloat64")
 {
-    field(DTYP, "asynFloat64ArrayIn")
+    field(DTYP, "asynFloat64ArrayOut")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_FLOAT64")
-    field(NELM, "$(NCHANS)")
+    field(NELM, "$(NELEMENTS)")
     field(FTVL, "DOUBLE")
     field(SCAN, "I/O Intr")
 }

@@ -40,11 +40,11 @@ epicsEnvSet("EPICS_CA_MAX_ARRAY_BYTES", "13000000")
 # softDetectorConfig(const char *portName, int maxSizeX, int maxSizeY, int dataType,
 #                   int maxBuffers, int maxMemory, int priority, int stackSize)
 softDetectorConfig("$(PORT)", $(XSIZE), $(YSIZE), 1, 0, 0)
-dbLoadRecords("$(ADSOFT)/db/softDetector.template","P=$(PREFIX),R=cam1:,PORT=$(PORT),ADDR=0,TIMEOUT=1,NCHANS=12000000")
+dbLoadRecords("$(ADSOFT)/db/softDetector.template","P=$(PREFIX),R=cam1:,PORT=$(PORT),ADDR=0,TIMEOUT=1,NELEMENTS=12000000")
 
 # Create a second softDetector driver
 softDetectorConfig("SOFT2", 300, 200, 1, 50, 50000000)
-dbLoadRecords("$(ADSOFT)/db/softDetector.template","P=$(PREFIX),R=cam2:,PORT=SOFT2,ADDR=0,TIMEOUT=1,NCHANS=12000000")
+dbLoadRecords("$(ADSOFT)/db/softDetector.template","P=$(PREFIX),R=cam2:,PORT=SOFT2,ADDR=0,TIMEOUT=1,NELEMENTS=12000000")
 
 # Load an NDFile database.  This is not supported for the softDetector which does not write files.
 #dbLoadRecords("NDFile.template","P=$(PREFIX),R=cam1:,PORT=SOFT1,ADDR=0,TIMEOUT=1")
@@ -71,8 +71,8 @@ dbLoadRecords("NDStdArrays.template", "P=$(PREFIX),R=image2:,PORT=Image2,ADDR=0,
 < $(ADCORE)/iocBoot/commonPlugins.cmd
 set_requestfile_path("$(ADSOFT)/softApp/Db")
 
-asynSetTraceIOMask("$(PORT)",0,2)
-asynSetTraceMask("$(PORT)",0,255)
+#asynSetTraceIOMask("$(PORT)",0,2)
+#asynSetTraceMask("$(PORT)",0,255)
 #asynSetTraceIOMask("FileNetCDF",0,2)
 #asynSetTraceMask("FileNetCDF",0,255)
 #asynSetTraceMask("FileNexus",0,255)

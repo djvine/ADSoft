@@ -1,6 +1,7 @@
 /* softDriver.cpp
  * 
  * This is a driver that allows any software to send images to area detector.
+ * Based on the simDetector driver by Mark Rivers.
  * 
  * Author: David J. Vine
  * Berkeley National Lab

@@ -1,0 +1,89 @@
+#===================================================
+# Template file: softDetector.template
+# Database for the records specific to the soft detector driver
+# David Vine
+# September 28, 2016
+
+include ADBase.template
+
+record(bi, "$(P)$(R)arrayMode")
+{
+    field(DTYP, "asynInt32")
+    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_MODE")
+    field(ZNAM, "Overwrite")
+    field(ONAM, "Append")
+    field(ZSV, "NO_ALARM") # AND_NO_SURPRISES
+    field(OSV, "MINOR")
+    field(SCAN, "I/O Intr")
+}
+
+record(waveform, "$(P)$(R)arrayInInt8")
+{
+    field(DTYP, "asynInt8ArrayIn")
+    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_INT8")
+    field(NELM, "$(NCHANS)")
+    field(FTVL, "CHAR")
+    field(SCAN, "I/O Intr")
+}
+
+record(waveform, "$(P)$(R)arrayInUInt8")
+{
+    field(DTYP, "asynInt8ArrayIn")
+    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_UINT8")
+    field(NELM, "$(NCHANS)")
+    field(FTVL, "UCHAR")
+    field(SCAN, "I/O Intr")
+}
+
+record(waveform, "$(P)$(R)arrayInInt16")
+{
+    field(DTYP, "asynInt16ArrayIn")
+    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_INT16")
+    field(NELM, "$(NCHANS)")
+    field(FTVL, "SHORT")
+    field(SCAN, "I/O Intr")
+}
+
+record(waveform, "$(P)$(R)arrayInUInt16")
+{
+    field(DTYP, "asynInt16ArrayIn")
+    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_UINT16")
+    field(NELM, "$(NCHANS)")
+    field(FTVL, "USHORT")
+    field(SCAN, "I/O Intr")
+}
+
+record(waveform, "$(P)$(R)arrayInInt32")
+{
+    field(DTYP, "asynInt32ArrayIn")
+    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_INT32")
+    field(NELM, "$(NCHANS)")
+    field(FTVL, "LONG")
+    field(SCAN, "I/O Intr")
+}
+
+record(waveform, "$(P)$(R)arrayInUInt32")
+{
+    field(DTYP, "asynInt32ArrayIn")
+    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_UINT32")
+    field(NELM, "$(NCHANS)")
+    field(FTVL, "ULONG")
+    field(SCAN, "I/O Intr")
+}
+
+record(waveform, "$(P)$(R)arrayInFloat32")
+{
+    field(DTYP, "asynFloat32ArrayIn")
+    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_FLOAT32")
+    field(NELM, "$(NCHANS)")
+    field(FTVL, "FLOAT")
+    field(SCAN, "I/O Intr")
+}
+record(waveform, "$(P)$(R)arrayInFloat64")
+{
+    field(DTYP, "asynFloat64ArrayIn")
+    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_FLOAT64")
+    field(NELM, "$(NCHANS)")
+    field(FTVL, "DOUBLE")
+    field(SCAN, "I/O Intr")
+}

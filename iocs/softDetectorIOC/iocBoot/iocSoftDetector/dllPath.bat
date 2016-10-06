@@ -1,0 +1,2 @@
+@ECHO OFF
+PATH %PATH%;/home/david/lang/cpp/areaDetector/ADSoft/iocs/softDetectorIOC/bin/linux-x86_64;/opt/epics/base/bin/linux-x86_64;/opt/epics/synApps_5_8/support/asyn-4-26/bin/linux-x86_64;/home/david/lang/cpp/areaDetector/ADCore/bin/linux-x86_64;/opt/epics/synApps_5_8/support/autosave-5-6-1/bin/linux-x86_64;/opt/epics/synApps_5_8/support/seq-2-2-1/bin/linux-x86_64;/opt/epics/synApps_5_8/support/devIocStats-3-1-13/bin/linux-x86_64

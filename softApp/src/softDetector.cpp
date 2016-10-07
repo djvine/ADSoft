@@ -44,8 +44,10 @@ void softDetector::setShutter(int open)
     }
 }
 
+int softDetector::computeImage
+
 /* Template function for reassembling an NDArray from a 1-D waveform. */
-int softDetector::reconstructArray( NDDataType_t dataType )
+int softDetector::reconstructArray()
 {
     int status = asynSuccess;
     int binX, binY, minX, minY, sizeX, sizeY, reverseX, reverseY;
@@ -198,6 +200,7 @@ int softDetector::reconstructArray( NDDataType_t dataType )
     if (status) asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                     "%s:%s: error setting parameters\n",
                     driverName, functionName);
+    epicsEventWait(this->stopEventId);
     return(status);
 }
 
@@ -245,7 +248,7 @@ void softDetector::startTask()
 
         setIntegerParam(ADStatus, ADStatusReadout);
 
-        epicsEventWait(this->stopEventId);
+        status |= reconstructArray()
 
         /* Close the shutter. */
         setShutter(ADShutterClosed);
@@ -262,49 +265,47 @@ void softDetector::startTask()
 
         callParamCallbacks();
 
-        
     }
 }
 
 asynStatus softDetector::writeInt8Array(asynUser *pasynUser, epicsInt8 *value, size_t nElements)
 {
-    printf("%s:int8\n", driverName);
+    computeImage<epicsInt8>(pasynUser, value, nElements, epicsInt8);
     return asynSuccess;
 }
 asynStatus softDetector::writeUInt8Array(asynUser *pasynUser, epicsUInt8 *value, size_t nElements)
 {
-    printf("%s:uint8\n", driverName);
+    computeImage<epicsUInt8>(pasynUser, value, nElements, epicsInt8);
     return asynSuccess;
 }
 asynStatus softDetector::writeInt16Array(asynUser *pasynUser, epicsInt16 *value, size_t nElements)
 {
-    printf("%s: int16\n", driverName);
+    computeImage<epicsInt16>(pasynUser, value, nElements, epicsInt8);
     return asynSuccess;
 }
 asynStatus softDetector::writeUInt16Array(asynUser *pasynUser, epicsUInt16 *value, size_t nElements)
 {
-    printf("%s: uint16\n", driverName);
+    computeImage<epicsUInt16>(pasynUser, value, nElements, epicsInt8);
     return asynSuccess;
 }
 asynStatus softDetector::writeInt32Array(asynUser *pasynUser, epicsInt32 *value, size_t nElements)
 {
-    printf("%s: int32\n", driverName);
+    computeImage<epicsInt32>(pasynUser, value, nElements, epicsInt8);
     return asynSuccess;
 }
 asynStatus softDetector::writeUInt32Array(asynUser *pasynUser, epicsUInt32 *value, size_t nElements)
 {
-    printf("%s: uint32\n", driverName);
+    computeImage<epicsUInt32>(pasynUser, value, nElements, epicsInt8);
     return asynSuccess;
 }
 asynStatus softDetector::writeFloat32Array(asynUser *pasynUser, epicsFloat32 *value, size_t nElements)
 {
-
-    printf("%s: float32\n", driverName);
+    computeImage<epicsFloat32>(pasynUser, value, nElements, epicsInt8);
     return asynSuccess;
 }
 asynStatus softDetector::writeFloat64Array(asynUser *pasynUser, epicsFloat64 *value, size_t nElements)
 {
-    printf("%s: float64\n", driverName);
+    computeImage<epicsFloat64>(pasynUser, value, nElements, epicsInt8);
     return asynSuccess;
 }
 /** Called when asyn clients call pasynInt32->write().

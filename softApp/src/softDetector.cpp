@@ -44,12 +44,100 @@ void softDetector::setShutter(int open)
     }
 }
 
-int softDetector::computeImage
+template <typeName epicsType> int softDetector::computeImage()
+{
+    epicsType *pMono=NULL, *pRed=NULL, *pBlue=NULL, *pGreen=NULL;
+    int columnStep=0, rowStep=0, colorMode;
+    int status = asynSuccess;
+    int i, j;
+    int itemp;
+    NDDataType_t dataType;
+
+    status = getIntegerParam(NDColorMode, *colorMode);
+    status |= getIntegerParam(ADDataType, *itemp); dataType = (NDDataType_t) itemp;
+    if (status) asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
+                        "%s:%s: error getting parameters",
+                        driverName, functionName);
+
+    if (epicsType != ADDataType)
+    {
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
+                "%s:computeImage: waveform put doesn't match AD data type",
+                driverName);
+    }
+
+    switch (colorMode)
+    {
+        case NDColorModeMono:
+            pMono = (epicsType *)pRaw->pData;
+            break;
+        case NDColorModeRGB1:
+            columnStep = 3;
+            rowStep = 0;
+            pRed   = (epicsType *)pRaw->pData;
+            pGreen = (epicsType *)pRaw->pData+1;
+            pBlue  = (epicsType *)pRaw->pData+2;
+            break;
+        case NDColorModeRGB2:
+            columnStep = 1;
+            rowStep = 2*sizeX;
+            pRed   = (epicsType *)pRaw->pData;
+            pGreen = (epicsType *)pRaw->pData+sizeX;
+            pBlue  = (epicsType *)pRaw->pData+2*sizeX;
+            break;
+        case NDColorModeRGB3:
+            columnStep = 1;
+            rowStep = 0;
+            pRed   = (epicsType *)pRaw->pData;
+            pGreen = (epicsType *)pRaw->pData+sizeX*sizeY;
+            pBlue  = (epicsType *)pRaw->pData+2*sizeX*sizeY;
+            break;
+    }
+    pRaw->pAttributeList->add("ColorMode", "Color Mode", NDAttrInt32, &colorMode);
+
+    for (i=0;i<sizeY;i++)
+    {
+        switch(colorMode)
+        {
+            case NDColorModeMono:
+                for (j=0;j<sizeX;j++)
+                {
+                    rndm = 2.*(rand()/(double)RAND_MAX-0.5);
+                    *pMono++ = (epicsType) rndm;
+                }
+                break;
+            case NDColorModeRGB1:
+            case NDColorModeRGB2:
+            case NDColorModeRGB3:
+                for (j=0;j<sizeX;j++)
+                {
+                    rndm = 2.*(rand()/(double)RAND_MAX-0.5);
+                    *pRed = (epicsType)rndm;
+                    rndm = 2.*(rand()/(double)RAND_MAX-0.5);
+                    *pBlue = (epicsType)rndm;
+                    rndm = 2.*(rand()/(double)RAND_MAX-0.5);
+                    *pGreen = (epicsType)rndm;
+                    pRed  += columnStep;
+                    pBlue += columnStep;
+                    pBlue += columnStep;
+                }
+                pRed   += rowStep;
+                pGreen += rowStep;
+                pBlue  += rowStep;
+                break;
+        }
+    }
+    
+    epicsEventSignal(this->imageEventID);
+    return(status);
+}
 
 /* Template function for reassembling an NDArray from a 1-D waveform. */
-int softDetector::reconstructArray()
+int softDetector::processArray()
 {
     int status = asynSuccess;
+    NDDataType_t dataType;
+    int itemp;
     int binX, binY, minX, minY, sizeX, sizeY, reverseX, reverseY;
     int xDim=0, yDim=1, colorDim=-1;
     int arrayModeVal = 0 /* Overwrite or append */
@@ -62,16 +150,18 @@ int softDetector::reconstructArray()
     NDArray *pImage;
     const char* functionName = "reconstructArray";
 
+    /* Get parameters from ADBase */
     status  = getIntegerParam(ADBinX,      &binX);
     status |= getIntegerParam(ADBinY,      &binY);
     status |= getIntegerParam(ADMinX,      &minX);
     status |= getIntegerParam(ADMinY,      &minY);
     status |= getIntegerParam(ADSizeX,     &sizeX);
     status |= getIntegerParam(ADSizeY,     &sizeY);
-    status |= getIntegerParam(ADReverseX,  &reverseX);
-    status |= getIntegerParam(ADReverseY,  &reverseY);
     status |= getIntegerParam(ADMaxSizeX,  &maxSizeX);
     status |= getIntegerParam(ADMaxSizeY,  &maxSizeY);
+    status |= getIntegerParam(ADReverseX,  &reverseX);
+    status |= getIntegerParam(ADReverseY,  &reverseY);
+    status |= getIntegerParam(ADDataType,  &itemp); dataType = (NDDataType_t) itemp;
     status |= getIntegerParam(ADColorMode, &colorMode);
     status |= getIntegerParam(arrayMode, &arrayModeVal);
 
@@ -113,6 +203,22 @@ int softDetector::reconstructArray()
         status |= setIntegerParam(ADSizeY, sizeY);
     }
 
+
+    if (pRaw_) pRaw_->release();
+    /* Allocate the raw buffer we use to compute images. */
+    dims[xDim] = maxSizeX;
+    dims[yDim] = maxSizeY;
+    if (ndims > 2) dims[colorDim] = 3;
+    pRaw_ = this->pNDArrayPool->alloc(ndims, dims, dataType, 0, NULL);
+
+    if (!pRaw_) {
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
+                  "%s:%s: error allocating raw buffer\n",
+                  driverName, functionName);
+        return(status);
+    }
+
+    /* This switch is used to determine the pixel order in the array */
     switch (colorMode) {
         case NDColorModeMono:
             ndims = 2;
@@ -139,32 +245,9 @@ int softDetector::reconstructArray()
             break;
     }
 
-    switch (dataType) {
-        case NDInt8:
-            status |= computeImage<epicsInt8>();
-            break;
-        case NDUInt8:
-            status |= computeImage<epicsUInt8>();
-            break;
-        case NDInt16:
-            status |= computeImage<epicsInt16>();
-            break;
-        case NDUInt16:
-            status |= computeImage<epicsUInt16>();
-            break;
-        case NDInt32:
-            status |= computeImage<epicsInt32>();
-            break;
-        case NDUInt32:
-            status |= computeImage<epicsUInt32>();
-            break;
-        case NDFloat32:
-            status |= computeImage<epicsFloat32>();
-            break;
-        case NDFloat64:
-            status |= computeImage<epicsFloat64>();
-            break;
-    }
+    /* Stop here and wait for an array to be written */
+    epicsEventWait(this->imageEventId);
+
     
     /* Extract the region of interest with binning.
      * If the entire image is being used (no ROI or binning) that's OK because
@@ -200,7 +283,6 @@ int softDetector::reconstructArray()
     if (status) asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                     "%s:%s: error setting parameters\n",
                     driverName, functionName);
-    epicsEventWait(this->stopEventId);
     return(status);
 }
 
@@ -248,7 +330,7 @@ void softDetector::startTask()
 
         setIntegerParam(ADStatus, ADStatusReadout);
 
-        status |= reconstructArray()
+        status |= processArray()
 
         /* Close the shutter. */
         setShutter(ADShutterClosed);
@@ -399,6 +481,13 @@ softDetector::softDetector(const char *portName,
             driverName, functionName);
          return;
      }
+     this->imageEventId = epicsEventCreate(epicsEventEmpty);
+     if (!this->imageEventId)
+     {
+         printf("%s:%s: epicsEventCreate failure for image event\n",
+            driverName, functionName);
+         return;
+     }
 
     createParam(arrayModeString,       asynParamInt32,        &arrayMode);
     createParam(arrayInInt8String,     asynParamInt8Array,    &arrayInInt8);
@@ -463,19 +552,23 @@ extern "C" int softDetectorConfig(const char *portName, int maxBuffers, int maxM
 
 /** Code for iocsh registration */
 static const iocshArg softDetectorConfigArg0 = {"Port name", iocshArgString};
-static const iocshArg softDetectorConfigArg1 = {"maxBuffers", iocshArgInt};
-static const iocshArg softDetectorConfigArg2 = {"maxMemory", iocshArgInt};
-static const iocshArg softDetectorConfigArg3 = {"priority", iocshArgInt};
-static const iocshArg softDetectorConfigArg4 = {"stackSize", iocshArgInt};
+static const iocshArg softDetectorConfigArg1 = {"Max X size", iocshArgString};
+static const iocshArg softDetectorConfigArg2 = {"Max Y size", iocshArgString};
+static const iocshArg softDetectorConfigArg3 = {"maxBuffers", iocshArgInt};
+static const iocshArg softDetectorConfigArg4 = {"maxMemory", iocshArgInt};
+static const iocshArg softDetectorConfigArg5 = {"priority", iocshArgInt};
+static const iocshArg softDetectorConfigArg6 = {"stackSize", iocshArgInt};
 static const iocshArg * const softDetectorConfigArgs[] =  {&softDetectorConfigArg0,
                                                            &softDetectorConfigArg1,
                                                            &softDetectorConfigArg2,
                                                            &softDetectorConfigArg3,
-                                                           &softDetectorConfigArg4};
-static const iocshFuncDef configsoftDetector = {"softDetectorConfig", 5, softDetectorConfigArgs};
+                                                           &softDetectorConfigArg4,
+                                                           &softDetectorConfigArg5,
+                                                           &softDetectorConfigArg6};
+static const iocshFuncDef configsoftDetector = {"softDetectorConfig", 7, softDetectorConfigArgs};
 static void configsoftDetectorCallFunc(const iocshArgBuf *args)
 {
-    softDetectorConfig(args[0].sval, args[1].ival, args[2].ival, args[3].ival, args[4].ival);
+    softDetectorConfig(args[0].sval, args[1].ival, args[2].ival, args[3].ival, args[4].ival, args[5].ival, args[6].ival);
 }
 
 static void softDetectorRegister(void)

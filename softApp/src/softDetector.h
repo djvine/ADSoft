@@ -16,7 +16,7 @@
 
 class epicsShareClass softDetector : public ADDriver{
 public:
-    softDetector(const char *portName, 
+    softDetector(const char *portName, int maxSizeX, int maxSizeY,
                  int maxBuffers, size_t maxMemory,
                  int priority, int stackSize);
     
@@ -51,6 +51,7 @@ private:
     template <typename epicsType> int computeImage(asynUser *pasynUser, epicsType value, size_t nElements);
     epicsEventId startEventId;
     epicsEventId stopEventId;
+    epicsEventId imageEventId;
     NDArray *pRaw;
 
 };

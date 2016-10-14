@@ -47,8 +47,8 @@ protected:
 #define LAST_SOFT_DETECTOR_PARAM arrayInFloat64
 
 private:
-    int reconstructArray();
-    template <typename epicsType> int computeImage(asynUser *pasynUser, epicsType value, size_t nElements);
+    template <typename epicsType> int updateImage(asynUser*& pasynUser, epicsType*& value, size_t nElements);
+    template <typename epicsType> int computeImage(asynUser*& pasynUser, epicsType*& value, size_t nElements);
     epicsEventId startEventId;
     epicsEventId stopEventId;
     epicsEventId imageEventId;

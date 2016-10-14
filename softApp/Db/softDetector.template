@@ -6,7 +6,7 @@
 
 include ADBase.template
 
-record(bi, "$(P)$(R)arrayMode")
+record(bo, "$(P)$(R)arrayMode")
 {
     field(DTYP, "asynInt32")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_MODE")
@@ -14,7 +14,6 @@ record(bi, "$(P)$(R)arrayMode")
     field(ONAM, "Append")
     field(ZSV, "NO_ALARM") # AND_NO_SURPRISES
     field(OSV, "MINOR")
-    field(SCAN, "I/O Intr")
 }
 
 record(waveform, "$(P)$(R)arrayInInt8")
@@ -23,7 +22,6 @@ record(waveform, "$(P)$(R)arrayInInt8")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_INT8")
     field(NELM, "$(NELEMENTS)")
     field(FTVL, "CHAR")
-    field(SCAN, "I/O Intr")
 }
 
 record(waveform, "$(P)$(R)arrayInUInt8")
@@ -32,7 +30,6 @@ record(waveform, "$(P)$(R)arrayInUInt8")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_UINT8")
     field(NELM, "$(NELEMENTS)")
     field(FTVL, "UCHAR")
-    field(SCAN, "I/O Intr")
 }
 
 record(waveform, "$(P)$(R)arrayInInt16")
@@ -41,7 +38,6 @@ record(waveform, "$(P)$(R)arrayInInt16")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_INT16")
     field(NELM, "$(NELEMENTS)")
     field(FTVL, "SHORT")
-    field(SCAN, "I/O Intr")
 }
 
 record(waveform, "$(P)$(R)arrayInUInt16")
@@ -50,7 +46,6 @@ record(waveform, "$(P)$(R)arrayInUInt16")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_UINT16")
     field(NELM, "$(NELEMENTS)")
     field(FTVL, "USHORT")
-    field(SCAN, "I/O Intr")
 }
 
 record(waveform, "$(P)$(R)arrayInInt32")
@@ -59,7 +54,6 @@ record(waveform, "$(P)$(R)arrayInInt32")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_INT32")
     field(NELM, "$(NELEMENTS)")
     field(FTVL, "LONG")
-    field(SCAN, "I/O Intr")
 }
 
 record(waveform, "$(P)$(R)arrayInUInt32")
@@ -68,7 +62,6 @@ record(waveform, "$(P)$(R)arrayInUInt32")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_UINT32")
     field(NELM, "$(NELEMENTS)")
     field(FTVL, "ULONG")
-    field(SCAN, "I/O Intr")
 }
 
 record(waveform, "$(P)$(R)arrayInFloat32")
@@ -77,7 +70,6 @@ record(waveform, "$(P)$(R)arrayInFloat32")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_FLOAT32")
     field(NELM, "$(NELEMENTS)")
     field(FTVL, "FLOAT")
-    field(SCAN, "I/O Intr")
 }
 record(waveform, "$(P)$(R)arrayInFloat64")
 {
@@ -85,5 +77,4 @@ record(waveform, "$(P)$(R)arrayInFloat64")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_FLOAT64")
     field(NELM, "$(NELEMENTS)")
     field(FTVL, "DOUBLE")
-    field(SCAN, "I/O Intr")
 }

@@ -44,28 +44,23 @@ void softDetector::setShutter(int open)
     }
 }
 
-template <typeName epicsType> int softDetector::computeImage()
+template <typename epicsType> int softDetector::computeImage(asynUser*& pasynUser, epicsType*& arrayType, size_t nElements)
 {
     epicsType *pMono=NULL, *pRed=NULL, *pBlue=NULL, *pGreen=NULL;
     int columnStep=0, rowStep=0, colorMode;
     int status = asynSuccess;
+    int sizeX, sizeY;
     int i, j;
-    int itemp;
-    NDDataType_t dataType;
+    double rndm;
 
-    status = getIntegerParam(NDColorMode, *colorMode);
-    status |= getIntegerParam(ADDataType, *itemp); dataType = (NDDataType_t) itemp;
+    status = getIntegerParam(NDColorMode, &colorMode);
+    status |= getIntegerParam(ADSizeX, &sizeX);
+    status |= getIntegerParam(ADSizeY, &sizeY);
     if (status) asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
-                        "%s:%s: error getting parameters",
-                        driverName, functionName);
+                        "%s:computeImage: error getting parameters",
+                        driverName);
 
-    if (epicsType != ADDataType)
-    {
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
-                "%s:computeImage: waveform put doesn't match AD data type",
-                driverName);
-    }
-
+    printf("here 7.\n");
     switch (colorMode)
     {
         case NDColorModeMono:
@@ -95,6 +90,7 @@ template <typeName epicsType> int softDetector::computeImage()
     }
     pRaw->pAttributeList->add("ColorMode", "Color Mode", NDAttrInt32, &colorMode);
 
+    printf("Starting to fill out array.\n");
     for (i=0;i<sizeY;i++)
     {
         switch(colorMode)
@@ -102,8 +98,14 @@ template <typeName epicsType> int softDetector::computeImage()
             case NDColorModeMono:
                 for (j=0;j<sizeX;j++)
                 {
-                    rndm = 2.*(rand()/(double)RAND_MAX-0.5);
+                    /*rndm = 2.*(rand()/(double)RAND_MAX-0.5);*/
+                    rndm = 128*(rand()/(double)RAND_MAX);
                     *pMono++ = (epicsType) rndm;
+                    if (i==0){
+                        if (j<10){
+                            printf("%f %d\n", rndm, *pMono);
+                        }
+                    }
                 }
                 break;
             case NDColorModeRGB1:
@@ -128,19 +130,22 @@ template <typeName epicsType> int softDetector::computeImage()
         }
     }
     
-    epicsEventSignal(this->imageEventID);
     return(status);
 }
 
-/* Template function for reassembling an NDArray from a 1-D waveform. */
-int softDetector::processArray()
+template <typename epicsType> int softDetector::updateImage(asynUser*& pasynUser, epicsType*& value, size_t nElements)
 {
     int status = asynSuccess;
     NDDataType_t dataType;
+    int imageCounter;
+    int numImages, numImagesCounter;
+    int arrayCallbacks;
+    int acquire;
+    epicsTimeStamp startTime;
     int itemp;
     int binX, binY, minX, minY, sizeX, sizeY, reverseX, reverseY;
     int xDim=0, yDim=1, colorDim=-1;
-    int arrayModeVal = 0 /* Overwrite or append */
+    int arrayModeVal = 0; /* Overwrite or append */
     int maxSizeX, maxSizeY;
     int colorMode;
     int ndims=0;
@@ -148,7 +153,7 @@ int softDetector::processArray()
     size_t dims[3];
     NDArrayInfo_t arrayInfo;
     NDArray *pImage;
-    const char* functionName = "reconstructArray";
+    const char* functionName = "updateImage";
 
     /* Get parameters from ADBase */
     status  = getIntegerParam(ADBinX,      &binX);
@@ -161,8 +166,8 @@ int softDetector::processArray()
     status |= getIntegerParam(ADMaxSizeY,  &maxSizeY);
     status |= getIntegerParam(ADReverseX,  &reverseX);
     status |= getIntegerParam(ADReverseY,  &reverseY);
-    status |= getIntegerParam(ADDataType,  &itemp); dataType = (NDDataType_t) itemp;
-    status |= getIntegerParam(ADColorMode, &colorMode);
+    status |= getIntegerParam(NDDataType,  &itemp); dataType = (NDDataType_t) itemp;
+    status |= getIntegerParam(NDColorMode, &colorMode);
     status |= getIntegerParam(arrayMode, &arrayModeVal);
 
     if (status) asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
@@ -172,7 +177,7 @@ int softDetector::processArray()
     /* Make sure parameters are consistent, fix them if they're not. */
     if (binX<1){
         binX=1;
-        status |= setIntegerParam(ADBinx, binX);
+        status |= setIntegerParam(ADBinX, binX);
     }
     if (binY<1){
         binY=1;
@@ -203,21 +208,6 @@ int softDetector::processArray()
         status |= setIntegerParam(ADSizeY, sizeY);
     }
 
-
-    if (pRaw_) pRaw_->release();
-    /* Allocate the raw buffer we use to compute images. */
-    dims[xDim] = maxSizeX;
-    dims[yDim] = maxSizeY;
-    if (ndims > 2) dims[colorDim] = 3;
-    pRaw_ = this->pNDArrayPool->alloc(ndims, dims, dataType, 0, NULL);
-
-    if (!pRaw_) {
-        asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
-                  "%s:%s: error allocating raw buffer\n",
-                  driverName, functionName);
-        return(status);
-    }
-
     /* This switch is used to determine the pixel order in the array */
     switch (colorMode) {
         case NDColorModeMono:
@@ -244,10 +234,23 @@ int softDetector::processArray()
             yDim     = 1;
             break;
     }
+    if (arrayModeVal==0){ /* Overwrite */
+        if (pRaw) pRaw->release();
+        /* Allocate the raw buffer we use to compute images. */
+        dims[xDim] = maxSizeX;
+        dims[yDim] = maxSizeY;
+        if (ndims > 2) dims[colorDim] = 3;
+        pRaw = this->pNDArrayPool->alloc(ndims, dims, dataType, 0, NULL);
 
-    /* Stop here and wait for an array to be written */
-    epicsEventWait(this->imageEventId);
+        if (!pRaw) {
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
+                      "%s:%s: error allocating raw buffer\n",
+                      driverName, functionName);
+            return(status);
+        }
+    }
 
+    status |= computeImage<epicsType>(pasynUser, value, nElements);
     
     /* Extract the region of interest with binning.
      * If the entire image is being used (no ROI or binning) that's OK because
@@ -264,6 +267,7 @@ int softDetector::processArray()
     /* We save the most recent image buffer so it can be used in the read() function.
      * Now release it before getting a new version. */
     if (this->pArrays[0]) this->pArrays[0]->release();
+    printf("i'm here.\n");
     status = this->pNDArrayPool->convert(pRaw,
                                          &this->pArrays[0],
                                          dataType,
@@ -283,6 +287,32 @@ int softDetector::processArray()
     if (status) asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                     "%s:%s: error setting parameters\n",
                     driverName, functionName);
+    setIntegerParam(ADStatus, ADStatusReadout);
+    callParamCallbacks();
+
+    pImage = this->pArrays[0];
+    getIntegerParam(NDArrayCounter, &imageCounter);
+    getIntegerParam(ADNumImages, &numImages);
+    getIntegerParam(ADNumImagesCounter, &numImagesCounter);
+    getIntegerParam(NDArrayCallbacks, &arrayCallbacks);
+    imageCounter++;
+    numImagesCounter++;
+    setIntegerParam(NDArrayCounter, imageCounter);
+    setIntegerParam(ADNumImagesCounter, numImagesCounter);
+
+    pImage->uniqueId = imageCounter;
+    pImage->timeStamp = startTime.secPastEpoch+startTime.nsec/1.e9;
+    updateTimeStamp(&pImage->epicsTS);
+
+    this->getAttributes(pImage->pAttributeList);
+    if (arrayCallbacks) {
+        this->unlock();
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+                "%s:%s: calling imageData callback\n", driverName, functionName);
+        doCallbacksGenericPointer(pImage, NDArrayData, 0);
+        this->lock();
+    }
+    printf("leaving.\n");
     return(status);
 }
 
@@ -295,8 +325,13 @@ static void startTaskC(void *drvPvt)
 void softDetector::startTask()
 {
     int status = asynSuccess;
+    int imageCounter;
+    int numImages, numImagesCounter;
+    int arrayCallbacks;
     int acquire;
+    epicsTimeStamp startTime;
     const char* functionName = "startTask";
+    NDArray *pImage;
 
     this->lock();
     /* Loop forever */
@@ -313,12 +348,15 @@ void softDetector::startTask()
              asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
                 "%s:%s: waiting for acquire to start\n", driverName, functionName);
              this->unlock();
+             printf("Waiting for acquire to start.\n");
              epicsEventWait(this->startEventId);
              this->lock();
              acquire = 1;
              setStringParam(ADStatusMessage, "Acquiring Data");
              setIntegerParam(ADNumImagesCounter, 0);
         }
+
+        epicsTimeGetCurrent(&startTime);
 
         setIntegerParam(ADStatus, ADStatusAcquire);
 
@@ -328,15 +366,44 @@ void softDetector::startTask()
         /* Call the callbacks to update any changes. */
         callParamCallbacks();
 
-        setIntegerParam(ADStatus, ADStatusReadout);
+        asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+            "%s:%s: waiting for user to put waveform data\n", driverName, functionName);
 
-        status |= processArray()
-
+        this->unlock();
+        epicsEventWait(this->stopEventId);
+        this->lock();
+        printf("Closing out acquisition.\n");
         /* Close the shutter. */
         setShutter(ADShutterClosed);
 
         /* Call the callbacks to update any changes. */
         callParamCallbacks();
+        
+        setIntegerParam(ADStatus, ADStatusReadout);
+        callParamCallbacks();
+
+        pImage = this->pArrays[0];
+        getIntegerParam(NDArrayCounter, &imageCounter);
+        getIntegerParam(ADNumImages, &numImages);
+        getIntegerParam(ADNumImagesCounter, &numImagesCounter);
+        getIntegerParam(NDArrayCallbacks, &arrayCallbacks);
+        imageCounter++;
+        numImagesCounter++;
+        setIntegerParam(NDArrayCounter, imageCounter);
+        setIntegerParam(ADNumImagesCounter, numImagesCounter);
+
+        pImage->uniqueId = imageCounter;
+        pImage->timeStamp = startTime.secPastEpoch+startTime.nsec/1.e9;
+        updateTimeStamp(&pImage->epicsTS);
+
+        this->getAttributes(pImage->pAttributeList);
+        if (arrayCallbacks) {
+            this->unlock();
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+                    "%s:%s: calling imageData callback\n", driverName, functionName);
+            doCallbacksGenericPointer(pImage, NDArrayData, 0);
+            this->lock();
+        }
 
         setStringParam(ADStatusMessage, "Waiting for acquisition.");
         setIntegerParam(ADStatus, ADStatusIdle);
@@ -352,44 +419,121 @@ void softDetector::startTask()
 
 asynStatus softDetector::writeInt8Array(asynUser *pasynUser, epicsInt8 *value, size_t nElements)
 {
-    computeImage<epicsInt8>(pasynUser, value, nElements, epicsInt8);
-    return asynSuccess;
+    int adstatus;
+    asynStatus status = asynSuccess;
+    status = getIntegerParam(ADStatus, &adstatus);
+
+    if (!adstatus){
+         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+            "%s:writeInt8Array: Ignore array while not acquiring.\n", driverName);
+    } else {
+        this->lock();
+        updateImage<epicsInt8>(pasynUser, value, nElements);
+        this->unlock();
+    }
+    return status;
 }
 asynStatus softDetector::writeUInt8Array(asynUser *pasynUser, epicsUInt8 *value, size_t nElements)
 {
-    computeImage<epicsUInt8>(pasynUser, value, nElements, epicsInt8);
-    return asynSuccess;
+    int adstatus;
+    asynStatus status = asynSuccess;
+    status = getIntegerParam(ADStatus, &adstatus);
+
+    if (!adstatus){
+         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+            "%s:writeUInt8Array: Ignore array while not acquiring.\n", driverName);
+    } else {
+        this->lock();
+        updateImage<epicsUInt8>(pasynUser, value, nElements);
+        this->unlock();
+    }
+    return status;
 }
 asynStatus softDetector::writeInt16Array(asynUser *pasynUser, epicsInt16 *value, size_t nElements)
 {
-    computeImage<epicsInt16>(pasynUser, value, nElements, epicsInt8);
-    return asynSuccess;
+    int adstatus;
+    asynStatus status = asynSuccess;
+    status = getIntegerParam(ADStatus, &adstatus);
+
+    if (!adstatus){
+         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+            "%s:writeInt16Array: Ignore array while not acquiring.\n", driverName);
+    } else {
+        updateImage<epicsInt16>(pasynUser, value, nElements);
+    }
+    return status;
 }
 asynStatus softDetector::writeUInt16Array(asynUser *pasynUser, epicsUInt16 *value, size_t nElements)
 {
-    computeImage<epicsUInt16>(pasynUser, value, nElements, epicsInt8);
-    return asynSuccess;
+    int adstatus;
+    asynStatus status = asynSuccess;
+    status = getIntegerParam(ADStatus, &adstatus);
+
+    if (!adstatus){
+         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+            "%s:writeUInt16Array: Ignore array while not acquiring.\n", driverName);
+    } else {
+        updateImage<epicsUInt16>(pasynUser, value, nElements);
+    }
+    return status;
 }
 asynStatus softDetector::writeInt32Array(asynUser *pasynUser, epicsInt32 *value, size_t nElements)
 {
-    computeImage<epicsInt32>(pasynUser, value, nElements, epicsInt8);
-    return asynSuccess;
+    int adstatus;
+    asynStatus status = asynSuccess;
+    status = getIntegerParam(ADStatus, &adstatus);
+
+    if (!adstatus){
+         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+            "%s:writeInt32Array: Ignore array while not acquiring.\n", driverName);
+    } else {
+        updateImage<epicsInt32>(pasynUser, value, nElements);
+    }
+    return status;
 }
 asynStatus softDetector::writeUInt32Array(asynUser *pasynUser, epicsUInt32 *value, size_t nElements)
 {
-    computeImage<epicsUInt32>(pasynUser, value, nElements, epicsInt8);
-    return asynSuccess;
+    int adstatus;
+    asynStatus status = asynSuccess;
+    status = getIntegerParam(ADStatus, &adstatus);
+
+    if (!adstatus){
+         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+            "%s:writeUInt32Array: Ignore array while not acquiring.\n", driverName);
+    } else {
+        updateImage<epicsUInt32>(pasynUser, value, nElements);
+    }
+    return status;
 }
 asynStatus softDetector::writeFloat32Array(asynUser *pasynUser, epicsFloat32 *value, size_t nElements)
 {
-    computeImage<epicsFloat32>(pasynUser, value, nElements, epicsInt8);
-    return asynSuccess;
+    int adstatus;
+    asynStatus status = asynSuccess;
+    status = getIntegerParam(ADStatus, &adstatus);
+
+    if (!adstatus){
+         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+            "%s:writeFloat32Array: Ignore array while not acquiring.\n", driverName);
+    } else {
+        updateImage<epicsFloat32>(pasynUser, value, nElements);
+    }
+    return status;
 }
 asynStatus softDetector::writeFloat64Array(asynUser *pasynUser, epicsFloat64 *value, size_t nElements)
 {
-    computeImage<epicsFloat64>(pasynUser, value, nElements, epicsInt8);
-    return asynSuccess;
+    int adstatus;
+    asynStatus status = asynSuccess;
+    status = getIntegerParam(ADStatus, &adstatus);
+
+    if (!adstatus){
+         asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+            "%s:writeFloat64Array: Ignore array while not acquiring.\n", driverName);
+    } else {
+        updateImage<epicsFloat64>(pasynUser, value, nElements);
+    }
+    return status;
 }
+
 /** Called when asyn clients call pasynInt32->write().
   * This function performs actions for some parameters, including ADAcquire.
   * \param[in] pasynUser pasynUser structure that encodes reason and address.
@@ -405,6 +549,7 @@ asynStatus softDetector::writeInt32(asynUser *pasynUser, epicsInt32 value)
 
     if (function==ADAcquire)
     {
+        printf("Got ADAcquire.\n");
         getIntegerParam(ADStatus, &adstatus);
         if (value && (adstatus==ADStatusIdle))
         {
@@ -448,16 +593,16 @@ asynStatus softDetector::writeInt32(asynUser *pasynUser, epicsInt32 value)
   *            asynFlags.
   **/
 
-softDetector::softDetector(const char *portName,
+softDetector::softDetector(const char *portName, int maxSizeX, int maxSizeY,
                  int maxBuffers, size_t maxMemory,
                  int priority, int stackSize)
 
     : ADDriver(portName, 1, NUM_SOFT_DETECTOR_PARAMS,
                maxBuffers, maxMemory,
-               asynInt8ArrayMask | asynInt16ArrayMask | asynInt32ArrayMask | asynFloat32ArrayMask | asynFloat64ArrayMask, 
+               asynInt8ArrayMask | asynInt16ArrayMask | asynInt32ArrayMask | asynFloat32ArrayMask | asynFloat64ArrayMask | asynDrvUserMask, 
                asynInt8ArrayMask | asynInt16ArrayMask | asynInt32ArrayMask | asynFloat32ArrayMask | asynFloat64ArrayMask, 
                0, 1, /* ASYN_CANBLOCK=0, ASYN_MULTIDEVICE=0, autoConnect=1 */
-               priority, stackSize)
+               priority, stackSize),
         pRaw(NULL)
 
 {
@@ -541,9 +686,9 @@ softDetector::softDetector(const char *portName,
     }
 }
 
-extern "C" int softDetectorConfig(const char *portName, int maxBuffers, int maxMemory, int priority, int stackSize)
+extern "C" int softDetectorConfig(const char *portName, int maxSizeX, int maxSizeY, int maxBuffers, int maxMemory, int priority, int stackSize)
 {
-    new softDetector(portName,
+    new softDetector(portName, maxSizeX, maxSizeY,
                     (maxBuffers < 0) ? 0 : maxBuffers,
                     (maxMemory < 0) ? 0 : maxMemory,
                     priority, stackSize);

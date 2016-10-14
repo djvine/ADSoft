@@ -34,17 +34,18 @@ epicsEnvSet("EPICS_DB_INCLUDE_PATH", "$(ADCORE)/db")
 # Do not set EPICS_CA_MAX_ARRAY_BYTES to a value much larger than that required, because EPICS Channel Access actually
 # allocates arrays of this size every time it needs a buffer larger than 16K.
 # Uncomment the following line to set it in the IOC.
-epicsEnvSet("EPICS_CA_MAX_ARRAY_BYTES", "13000000")
+epicsEnvSet("EPICS_CA_MAX_ARRAY_BYTES", "100000000")
 
 # Create a softDetector driver
-# softDetectorConfig(const char *portName, int maxSizeX, int maxSizeY, int dataType,
+# softDetectorConfig(const char *portName, int maxSizeX, int maxSizeY, 
 #                   int maxBuffers, int maxMemory, int priority, int stackSize)
-softDetectorConfig("$(PORT)", $(XSIZE), $(YSIZE), 1, 0, 0)
-dbLoadRecords("$(ADSOFT)/db/softDetector.template","P=$(PREFIX),R=cam1:,PORT=$(PORT),ADDR=0,TIMEOUT=1,NELEMENTS=12000000")
+softDetectorConfig("$(PORT)", $(XSIZE), $(YSIZE), 10, 0, 0)
+# NELEMENTS = XSIZE*YSIZE*8
+dbLoadRecords("$(ADSOFT)/db/softDetector.template","P=$(PREFIX),R=cam1:,PORT=$(PORT),ADDR=0,TIMEOUT=1,NELEMENTS=64000000")
 
 # Create a second softDetector driver
-softDetectorConfig("SOFT2", 300, 200, 1, 50, 50000000)
-dbLoadRecords("$(ADSOFT)/db/softDetector.template","P=$(PREFIX),R=cam2:,PORT=SOFT2,ADDR=0,TIMEOUT=1,NELEMENTS=12000000")
+softDetectorConfig("SOFT2", 300, 200, 1, 50, 0)
+dbLoadRecords("$(ADSOFT)/db/softDetector.template","P=$(PREFIX),R=cam2:,PORT=SOFT2,ADDR=0,TIMEOUT=1,NELEMENTS=32000")
 
 # Load an NDFile database.  This is not supported for the softDetector which does not write files.
 #dbLoadRecords("NDFile.template","P=$(PREFIX),R=cam1:,PORT=SOFT1,ADDR=0,TIMEOUT=1")
@@ -71,7 +72,7 @@ dbLoadRecords("NDStdArrays.template", "P=$(PREFIX),R=image2:,PORT=Image2,ADDR=0,
 < $(ADCORE)/iocBoot/commonPlugins.cmd
 set_requestfile_path("$(ADSOFT)/softApp/Db")
 
-#asynSetTraceIOMask("$(PORT)",0,2)
+asynSetTraceIOMask("$(PORT)",0,2)
 #asynSetTraceMask("$(PORT)",0,255)
 #asynSetTraceIOMask("FileNetCDF",0,2)
 #asynSetTraceMask("FileNetCDF",0,255)

@@ -1,14 +1,14 @@
 
 file {
-	name="/home/epics/devel-AD2.0/areaDetector-2-0/ADCore/ADApp/op/adl/simDetector.adl"
-	version=030107
+	name="/home/david/lang/cpp/areaDetector/ADSoft/softApp/op/adl/softDetector.adl"
+	version=030109
 }
 display {
 	object {
 		x=144
-		y=119
+		y=64
 		width=715
-		height=735
+		height=704
 	}
 	clr=14
 	bclr=4
@@ -115,40 +115,29 @@ text {
 	textix="Simulation setup"
 	align="horiz. right"
 }
-composite {
+rectangle {
 	object {
 		x=100
 		y=4
 		width=500
-		height=26
+		height=25
 	}
-	"composite name"=""
-	children {
-		rectangle {
-			object {
-				x=100
-				y=4
-				width=500
-				height=25
-			}
-			"basic attribute" {
-				clr=2
-			}
-		}
-		text {
-			object {
-				x=158
-				y=5
-				width=384
-				height=25
-			}
-			"basic attribute" {
-				clr=54
-			}
-			textix="Simulation Detector - $(P)$(R)"
-			align="horiz. centered"
-		}
+	"basic attribute" {
+		clr=2
 	}
+}
+text {
+	object {
+		x=158
+		y=5
+		width=384
+		height=25
+	}
+	"basic attribute" {
+		clr=54
+	}
+	textix="Simulation Detector - $(P)$(R)"
+	align="horiz. centered"
 }
 composite {
 	object {
@@ -159,26 +148,6 @@ composite {
 	}
 	"composite name"=""
 	"composite file"="ADSetup.adl"
-}
-composite {
-	object {
-		x=5
-		y=340
-		width=350
-		height=380
-	}
-	"composite name"=""
-	"composite file"="ADReadout.adl"
-}
-composite {
-	object {
-		x=360
-		y=570
-		width=350
-		height=60
-	}
-	"composite name"=""
-	"composite file"="ADAttrFile.adl"
 }
 composite {
 	object {
@@ -835,5 +804,346 @@ composite {
 				}
 			}
 		}
+	}
+}
+composite {
+	object {
+		x=101
+		y=336
+		width=159
+		height=21
+	}
+	"composite name"=""
+	children {
+		rectangle {
+			object {
+				x=122
+				y=336
+				width=117
+				height=21
+			}
+			"basic attribute" {
+				clr=2
+			}
+		}
+		text {
+			object {
+				x=101
+				y=336
+				width=159
+				height=20
+			}
+			"basic attribute" {
+				clr=54
+			}
+			textix="Readout"
+			align="horiz. centered"
+		}
+	}
+}
+text {
+	object {
+		x=181
+		y=361
+		width=10
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="X"
+	align="horiz. right"
+}
+text {
+	object {
+		x=274
+		y=361
+		width=10
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Y"
+	align="horiz. right"
+}
+text {
+	object {
+		x=35
+		y=431
+		width=110
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Array size"
+	align="horiz. right"
+}
+"text entry" {
+	object {
+		x=156
+		y=429
+		width=60
+		height=20
+	}
+	control {
+		chan="$(P)$(R)SizeX"
+		clr=14
+		bclr=51
+	}
+	limits {
+	}
+}
+"text entry" {
+	object {
+		x=249
+		y=429
+		width=60
+		height=20
+	}
+	control {
+		chan="$(P)$(R)SizeY"
+		clr=14
+		bclr=51
+	}
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=156
+		y=409
+		width=61
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)SizeX_RBV"
+		clr=54
+		bclr=4
+	}
+	align="horiz. centered"
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=249
+		y=409
+		width=61
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)SizeY_RBV"
+		clr=54
+		bclr=4
+	}
+	align="horiz. centered"
+	limits {
+	}
+}
+text {
+	object {
+		x=35
+		y=386
+		width=110
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Max array size"
+	align="horiz. right"
+}
+"text update" {
+	object {
+		x=156
+		y=385
+		width=61
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)MaxSizeX_RBV"
+		clr=54
+		bclr=4
+	}
+	align="horiz. centered"
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=249
+		y=385
+		width=61
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)MaxSizeY_RBV"
+		clr=54
+		bclr=4
+	}
+	align="horiz. centered"
+	limits {
+	}
+}
+text {
+	object {
+		x=42
+		y=481
+		width=180
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Array size (bytes)"
+	align="horiz. right"
+}
+"text update" {
+	object {
+		x=249
+		y=482
+		width=61
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)ArraySize_RBV"
+		clr=54
+		bclr=4
+	}
+	align="horiz. centered"
+	limits {
+	}
+}
+text {
+	object {
+		x=55
+		y=502
+		width=90
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Data type"
+	align="horiz. right"
+}
+menu {
+	object {
+		x=151
+		y=502
+		width=80
+		height=20
+	}
+	control {
+		chan="$(P)$(R)DataType"
+		clr=14
+		bclr=51
+	}
+}
+"text update" {
+	object {
+		x=249
+		y=503
+		width=79
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)DataType_RBV"
+		clr=54
+		bclr=4
+	}
+	align="horiz. centered"
+	format="string"
+	limits {
+	}
+}
+text {
+	object {
+		x=45
+		y=529
+		width=100
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Color mode"
+	align="horiz. right"
+}
+menu {
+	object {
+		x=151
+		y=529
+		width=80
+		height=20
+	}
+	control {
+		chan="$(P)$(R)ColorMode"
+		clr=14
+		bclr=51
+	}
+}
+"text update" {
+	object {
+		x=249
+		y=530
+		width=79
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)ColorMode_RBV"
+		clr=54
+		bclr=4
+	}
+	align="horiz. centered"
+	format="string"
+	limits {
+	}
+}
+text {
+	object {
+		x=45
+		y=456
+		width=100
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Array size"
+	align="horiz. right"
+}
+"text update" {
+	object {
+		x=156
+		y=457
+		width=61
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)ArraySizeX_RBV"
+		clr=54
+		bclr=4
+	}
+	align="horiz. centered"
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=249
+		y=457
+		width=61
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)ArraySizeY_RBV"
+		clr=54
+		bclr=4
+	}
+	align="horiz. centered"
+	limits {
 	}
 }

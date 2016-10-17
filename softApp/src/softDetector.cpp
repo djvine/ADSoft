@@ -569,6 +569,9 @@ softDetector::softDetector(const char *portName, int maxSizeX, int maxSizeY,
      }
 
     createParam(arrayModeString,       asynParamInt32,        &arrayMode);
+    createParam(arrayModeRBVString,    asynParamInt32,        &arrayMode_RBV);
+    createParam(numElementsString,     asynParamInt32,        &numElements);
+    createParam(numElementsRBVString,  asynParamInt32,        &numElements_RBV);
     createParam(arrayInInt8String,     asynParamInt8Array,    &arrayInInt8);
     createParam(arrayInUInt8String,    asynParamInt8Array,    &arrayInUInt8);
     createParam(arrayInInt16String,    asynParamInt16Array,   &arrayInInt16);
@@ -582,18 +585,12 @@ softDetector::softDetector(const char *portName, int maxSizeX, int maxSizeY,
     status |= setStringParam (ADModel, "Software Detector");
     status |= setIntegerParam(ADMaxSizeX, 2000);
     status |= setIntegerParam(ADMaxSizeY, 2000);
-    status |= setIntegerParam(ADMinX, 0); 
-    status |= setIntegerParam(ADMinY, 0); 
-    status |= setIntegerParam(ADBinX, 1); 
-    status |= setIntegerParam(ADBinY, 1); 
-    status |= setIntegerParam(ADReverseX, 0); 
-    status |= setIntegerParam(ADReverseY, 0); 
     status |= setIntegerParam(ADSizeX, 256);
     status |= setIntegerParam(ADSizeY, 256);
     status |= setIntegerParam(NDArraySizeX, 256);
     status |= setIntegerParam(NDArraySizeY, 256);
-    status |= setIntegerParam(NDArraySize, 0); 
-    status |= setIntegerParam(ADImageMode, ADImageContinuous);
+    status |= setIntegerParam(NDArraySize, 65536); 
+    status |= setIntegerParam(ADImageMode, ADImageSingle);
     status |= setDoubleParam (ADAcquireTime, .001);
     status |= setDoubleParam (ADAcquirePeriod, .005);
     status |= setIntegerParam(ADNumImages, 100);

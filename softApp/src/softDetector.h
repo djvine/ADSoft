@@ -34,6 +34,9 @@ public:
 
 protected:
     int arrayMode;      /* 0: Overwrite, 1: Append */
+    int arrayMode_RBV;  /* Array mode readback     */
+    int numElements;    /* Num elements to append in Append mode. */
+    int numElements_RBV; /* Num elements readback. */
     int arrayInInt8;    /* Input array of Int8     */
     int arrayInUInt8;   /* Input array of UInt8    */
     int arrayInInt16;   /* Input array of Int16    */
@@ -57,12 +60,15 @@ private:
 };
 
 #define arrayModeString       "ARRAY_MODE"         /* (asynInt32,        r/w) Overwrite or append */
+#define arrayModeRBVString    "ARRAY_MODE_RBV"     /* (asynInt32,        ro ) Read only           */
+#define numElementsString     "NUM_ELEMENTS"       /* (asynInt32,        r/w) Overwrite or append */
+#define numElementsRBVString  "NUM_ELEMENTS_RBV"   /* (asynInt32,        ro ) Read only           */
 #define arrayInInt8String     "ARRAY_IN_INT8"      /* (asynInt8Array,    r/w) holds image data */
-#define arrayInUInt8String    "ARRAY_IN_UINT8"     /* (asynInt8Array,   r/w) holds image data */
+#define arrayInUInt8String    "ARRAY_IN_UINT8"     /* (asynInt8Array,    r/w) holds image data */
 #define arrayInInt16String    "ARRAY_IN_INT16"     /* (asynInt16Array,   r/w) holds image data */
-#define arrayInUInt16String   "ARRAY_IN_UINT16"    /* (asynInt16Array,  r/w) holds image data */
+#define arrayInUInt16String   "ARRAY_IN_UINT16"    /* (asynInt16Array,   r/w) holds image data */
 #define arrayInInt32String    "ARRAY_IN_INT32"     /* (asynInt32Array,   r/w) holds image data */
-#define arrayInUInt32String   "ARRAY_IN_UINT32"    /* (asynInt32Array,  r/w) holds image data */
+#define arrayInUInt32String   "ARRAY_IN_UINT32"    /* (asynInt32Array,   r/w) holds image data */
 #define arrayInFloat32String  "ARRAY_IN_FLOAT32"   /* (asynFloat32Array, r/w) holds image data */
 #define arrayInFloat64String  "ARRAY_IN_FLOAT64"   /* (asynFloat64Array, r/w) holds image data */
 

@@ -9,11 +9,32 @@ include ADBase.template
 record(bo, "$(P)$(R)arrayMode")
 {
     field(DTYP, "asynInt32")
-    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_MODE")
+    field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_MODE")
     field(ZNAM, "Overwrite")
     field(ONAM, "Append")
-    field(ZSV, "NO_ALARM") # AND_NO_SURPRISES
-    field(OSV, "MINOR")
+    field(ZSV,  "NO_ALARM") # AND_NO_SURPRISES
+    field(OSV,  "MINOR")
+    field(VAL,  0)
+}
+
+record(bi, "$(P)$(R)arrayMode_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_MODE_RBV")
+    field(SCAN, "I/O Intr")
+}
+
+record(longout, "$(P)$(R)numElements")
+{
+    field(DTYP, "asynInt32")
+    field(OUT, "@asyn($(PORT),$(ADDR),$(TIMEOUT))NUM_ELEMENTS")
+}
+
+record(longin, "$(P)$(R)numElements_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))NUM_ELEMENTS")
+    field(SCAN, "I/O Intr")
 }
 
 record(waveform, "$(P)$(R)arrayInInt8")

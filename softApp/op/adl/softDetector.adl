@@ -1055,7 +1055,7 @@ menu {
 		height=20
 	}
 	control {
-		chan="$(P)$(R)arrayMode"
+		chan="$(P)$(R)ArrayMode"
 		clr=14
 		bclr=51
 	}
@@ -1068,7 +1068,7 @@ menu {
 		height=18
 	}
 	monitor {
-		chan="$(P)$(R)arrayMode_RBV"
+		chan="$(P)$(R)ArrayMode_RBV"
 		clr=54
 		bclr=4
 	}
@@ -1098,7 +1098,7 @@ text {
 		height=20
 	}
 	control {
-		chan="$(P)$(R)numElements"
+		chan="$(P)$(R)NumElements"
 		clr=14
 		bclr=51
 	}
@@ -1113,7 +1113,7 @@ text {
 		height=18
 	}
 	monitor {
-		chan="$(P)$(R)numElements_RBV"
+		chan="$(P)$(R)NumElements_RBV"
 		clr=54
 		bclr=4
 	}

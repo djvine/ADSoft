@@ -6,7 +6,7 @@
 
 include ADBase.template
 
-record(bo, "$(P)$(R)arrayMode")
+record(bo, "$(P)$(R)ArrayMode")
 {
     field(DTYP, "asynInt32")
     field(OUT,  "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_MODE")
@@ -17,27 +17,27 @@ record(bo, "$(P)$(R)arrayMode")
     field(VAL,  0)
 }
 
-record(bi, "$(P)$(R)arrayMode_RBV")
+record(bi, "$(P)$(R)ArrayMode_RBV")
 {
     field(DTYP, "asynInt32")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_MODE_RBV")
     field(SCAN, "I/O Intr")
 }
 
-record(longout, "$(P)$(R)numElements")
+record(longout, "$(P)$(R)NumElements")
 {
     field(DTYP, "asynInt32")
     field(OUT, "@asyn($(PORT),$(ADDR),$(TIMEOUT))NUM_ELEMENTS")
 }
 
-record(longin, "$(P)$(R)numElements_RBV")
+record(longin, "$(P)$(R)NumElements_RBV")
 {
     field(DTYP, "asynInt32")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))NUM_ELEMENTS")
     field(SCAN, "I/O Intr")
 }
 
-record(waveform, "$(P)$(R)arrayInInt8")
+record(waveform, "$(P)$(R)ArrayInInt8")
 {
     field(DTYP, "asynInt8ArrayOut")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_INT8")
@@ -45,7 +45,7 @@ record(waveform, "$(P)$(R)arrayInInt8")
     field(FTVL, "CHAR")
 }
 
-record(waveform, "$(P)$(R)arrayInUInt8")
+record(waveform, "$(P)$(R)ArrayInUInt8")
 {
     field(DTYP, "asynInt8ArrayOut")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_UINT8")
@@ -53,7 +53,7 @@ record(waveform, "$(P)$(R)arrayInUInt8")
     field(FTVL, "UCHAR")
 }
 
-record(waveform, "$(P)$(R)arrayInInt16")
+record(waveform, "$(P)$(R)ArrayInInt16")
 {
     field(DTYP, "asynInt16ArrayOut")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_INT16")
@@ -61,7 +61,7 @@ record(waveform, "$(P)$(R)arrayInInt16")
     field(FTVL, "SHORT")
 }
 
-record(waveform, "$(P)$(R)arrayInUInt16")
+record(waveform, "$(P)$(R)ArrayInUInt16")
 {
     field(DTYP, "asynInt16ArrayOut")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_UINT16")
@@ -69,7 +69,7 @@ record(waveform, "$(P)$(R)arrayInUInt16")
     field(FTVL, "USHORT")
 }
 
-record(waveform, "$(P)$(R)arrayInInt32")
+record(waveform, "$(P)$(R)ArrayInInt32")
 {
     field(DTYP, "asynInt32ArrayOut")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_INT32")
@@ -77,7 +77,7 @@ record(waveform, "$(P)$(R)arrayInInt32")
     field(FTVL, "LONG")
 }
 
-record(waveform, "$(P)$(R)arrayInUInt32")
+record(waveform, "$(P)$(R)ArrayInUInt32")
 {
     field(DTYP, "asynInt32ArrayOut")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_UINT32")
@@ -85,14 +85,14 @@ record(waveform, "$(P)$(R)arrayInUInt32")
     field(FTVL, "ULONG")
 }
 
-record(waveform, "$(P)$(R)arrayInFloat32")
+record(waveform, "$(P)$(R)ArrayInFloat32")
 {
     field(DTYP, "asynFloat32ArrayOut")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_FLOAT32")
     field(NELM, "$(NELEMENTS)")
     field(FTVL, "FLOAT")
 }
-record(waveform, "$(P)$(R)arrayInFloat64")
+record(waveform, "$(P)$(R)ArrayInFloat64")
 {
     field(DTYP, "asynFloat64ArrayOut")
     field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_FLOAT64")

@@ -24,6 +24,26 @@ data_types = {
     'float64': 7
 }
 
+np_data_types = {
+    'int8'   : np.int8,
+    'uint8'  : np.uint8,
+    'int16'  : np.int16,
+    'uint16' : np.uint16,
+    'int32'  : np.int32,
+    'uint32' : np.uint32,
+    'float32': np.float32,
+    'float64': np.float64
+}
+array_pv_names = {
+    'int8'   : 'ArrayInInt8.VAL',
+    'uint8'  : 'ArrayInUInt8.VAL',
+    'int16'  : 'ArrayInInt16',
+    'uint16' : 'ArrayInUInt16',
+    'int32'  : 'ArrayInInt32',
+    'uint32' : 'ArrayInUInt32',
+    'float32': 'ArrayInFloat32',
+    'float64': 'ArrayInFloat64'
+}
 color_modes = {
     'mono'  : 0,
     'bayer' : 1,
@@ -60,7 +80,7 @@ image_callbacks = {
     'disable': 0,
     'enable' : 1
 }
-class TestUInt8(unittest.TestCase):
+class TestADSoft(unittest.TestCase):
     
     def setUp(self):
         print('Begin setup')
@@ -79,12 +99,10 @@ class TestUInt8(unittest.TestCase):
         self.trigger_mode_pv = epics.PV(P+R+'TriggerMode.VAL')
         self.detector_state_pv = epics.PV(P+R+'DetectorState_RBV.VAL')
         self.array_callbacks_pv = epics.PV(P+R+'ArrayCallbacks.VAL')
-        self.array_in_pv = epics.PV(P+R+'ArrayInUInt8.VAL')
         print('PVs connected')
 
         self.size_x_pv.put(nx)
         self.size_y_pv.put(ny)
-        self.data_type_pv.put(data_types['uint8'])
         self.color_mode_pv.put(color_modes['mono'])
         self.num_images_pv.put('5')
         self.array_mode_pv.put(array_modes['overwrite'])
@@ -99,16 +117,41 @@ class TestUInt8(unittest.TestCase):
         pass
 
     def test_single_acquisition(self):
-        # Test overwrite mode
+        # Test overwrite mode 
         self.array_mode_pv.put(array_modes['overwrite'])
-        self.acquire_pv.put(acquire_mode['acquire'])
-        time.sleep(1.0)
-        self.array_in_pv.put(self.image.flatten(), wait=True)
-        image = self.image_plugin_array_pv.get(count=nx*ny)
-        print(self.image.flatten()[300:310])
-        print(image[300:310])
-        self.assertTrue(np.array_equal(image, self.image.flatten()))
+        self.image_mode_pv.put(image_modes['single'])
+        result = True
+        for dt in data_types:
+            print('Testing {:s}'.format(dt))
+            self.array_in_pv = epics.PV(P+R+array_pv_names[dt])
+            self.data_type_pv.put(data_types[dt])
+            image = np.random.uniform(0, 255, size=nx*ny).astype(np_data_types[dt]).reshape(nx, ny)
+            self.acquire_pv.put(acquire_mode['acquire'])
+            time.sleep(1.0)
+            self.array_in_pv.put(image.flatten(), wait=True)
+            rimage = self.image_plugin_array_pv.get(count=nx*ny).reshape(nx,ny)
+            result = result and self.assertTrue(np.array_equal(image, rimage))
 
+        self.color_mode_pv.put(color_modes['mono'])
+        return result
+
+    def test_multiple_acquisition(self):
+        # Test overwrite mode 
+        self.array_mode_pv.put(array_modes['overwrite'])
+        self.image_mode_pv.put(image_modes['single'])
+        result = True
+        for dt in data_types:
+            print('Testing {:s}'.format(dt))
+            self.array_in_pv = epics.PV(P+R+array_pv_names[dt])
+            self.data_type_pv.put(data_types[dt])
+            image = np.random.uniform(0, 255, size=nx*ny).astype(np_data_types[dt]).reshape(nx, ny)
+            self.acquire_pv.put(acquire_mode['acquire'])
+            time.sleep(1.0)
+            self.array_in_pv.put(image.flatten(), wait=True)
+            rimage = self.image_plugin_array_pv.get(count=nx*ny).reshape(nx,ny)
+            result = result and self.assertTrue(np.array_equal(image, rimage))
+
+        return result
 
 if __name__ == '__main__':
     unittest.main()

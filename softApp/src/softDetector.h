@@ -53,7 +53,9 @@ private:
     template <typename epicsType> int updateImage(asynUser*& pasynUser, epicsType*& value, size_t nElements);
     template <typename epicsType> int computeImage(asynUser*& pasynUser, epicsType*& value, size_t nElements);
     epicsEventId startEventId;
+    epicsEventId stopEventId;
     epicsEventId imageEventId;
+    int current_pixel;
 
 };
 

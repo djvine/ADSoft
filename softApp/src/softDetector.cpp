@@ -51,10 +51,16 @@ template <typename epicsType> int softDetector::computeImage(asynUser*& pasynUse
     int status = asynSuccess;
     int sizeX, sizeY;
     int i, j, k=0;
+    int i0, j0, k0;
+    int arrayModeVal; /* Overwrite (0) or append (1) */
+    int numElementsVal; /* Number of elements to write in append mode */
+    int pixelCount; /* How many pixels have been written */
 
     status = getIntegerParam(NDColorMode, &colorMode);
     status |= getIntegerParam(ADSizeX, &sizeX);
     status |= getIntegerParam(ADSizeY, &sizeY);
+    status |= getIntegerParam(numElements, &numElementsVal);
+    status |= getIntegerParam(arrayMode, *arrayModeVal);
     if (status) asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                         "%s:computeImage: error getting parameters",
                         driverName);
@@ -62,43 +68,70 @@ template <typename epicsType> int softDetector::computeImage(asynUser*& pasynUse
     switch (colorMode)
     {
         case NDColorModeMono:
-            printf("Mono\n");
             pMono = (epicsType *)this->pArrays[0]->pData;
+            /* If appending to the array skip forward to the current pixel */
+            if (arrayModeVal==1)
+                pMono = pMono+currentPixel;
+            }
             break;
         case NDColorModeRGB1:
-            printf("ColorRGB1\n");
             columnStep = 3;
             rowStep = 0;
             pRed   = (epicsType *)this->pArrays[0]->pData;
             pGreen = (epicsType *)this->pArrays[0]->pData+1;
             pBlue  = (epicsType *)this->pArrays[0]->pData+2;
+            /* If appending to the array skip forward to the current pixel */
+            if (arrayModeVal==1)
+                pRed += currentPixel;
+                pGreen += currentPixel;
+                pBlue += currentPixel;
+            }
             break;
         case NDColorModeRGB2:
-            printf("ColorRGB2\n");
             columnStep = 1;
             rowStep = 2*sizeX;
             pRed   = (epicsType *)this->pArrays[0]->pData;
             pGreen = (epicsType *)this->pArrays[0]->pData+sizeX;
             pBlue  = (epicsType *)this->pArrays[0]->pData+2*sizeX;
+            if (arrayModeVal==1)
+                pRed += currentPixel;
+                pGreen += currentPixel;
+                pBlue += currentPixel;
+            }
             break;
         case NDColorModeRGB3:
-            printf("ColorRGB3\n");
             columnStep = 1;
             rowStep = 0;
             pRed   = (epicsType *)this->pArrays[0]->pData;
             pGreen = (epicsType *)this->pArrays[0]->pData+sizeX*sizeY;
             pBlue  = (epicsType *)this->pArrays[0]->pData+2*sizeX*sizeY;
+            if (arrayModeVal==1)
+                pRed += currentPixel;
+                pGreen += currentPixel;
+                pBlue += currentPixel;
+            }
             break;
     }
     this->pArrays[0]->pAttributeList->add("ColorMode", "Color Mode", NDAttrInt32, &colorMode);
-    printf("Filling array\n");
 
-    for (i=0;i<sizeY;i++)
+    if (array_mode==0){
+        i0=0;
+        j0=0;
+        k0=0;
+    } else {
+        i0 = floor(currentPixel/sizeX);
+        j0 = currentPixel % sizeX;
+        k0=0;
+    }
+
+
+    pixelCount = 0;
+    for (i=i0;i<sizeY;i++)
     {
         switch(colorMode)
         {
             case NDColorModeMono:
-                for (j=0;j<sizeX;j++)
+                for (j=j0;j<sizeX;j++)
                 {
                     *(pMono+i*sizeX+j) = (epicsType) *(array+i*sizeX+j);
                 }
@@ -106,7 +139,7 @@ template <typename epicsType> int softDetector::computeImage(asynUser*& pasynUse
             case NDColorModeRGB1:
             case NDColorModeRGB2:
             case NDColorModeRGB3:
-                for (j=0;j<sizeX;j++)
+                for (j=j0;j<sizeX;j++)
                 {
                     *pRed = (epicsType) *(array + k++);
                     *pBlue = (epicsType) *(array + k++);
@@ -119,6 +152,11 @@ template <typename epicsType> int softDetector::computeImage(asynUser*& pasynUse
                 pGreen += rowStep;
                 pBlue  += rowStep;
                 break;
+        }
+        pixelCount += 1;
+        currentPixel += 1;
+        if (pixelCount>=numElementsVal){
+            break
         }
     }
     
@@ -238,12 +276,16 @@ static void startTaskC(void *drvPvt)
 void softDetector::startTask()
 {
     int status = asynSuccess;
+    int imageStatus;
     int imageCounter;
     int numImages, numImagesCounter;
     int imageMode;
     int arrayCallbacks;
     int acquire;
-    epicsTimeStamp startTime;
+    double acquirePeriod, delay;
+    epicsTimeStamp startTime, endTime;
+    double elapsedTime;
+    double exposureTime;
     const char* functionName = "startTask";
     NDArray *pImage;
 
@@ -274,6 +316,10 @@ void softDetector::startTask()
         /* Get the current time. */
         epicsTimeGetCurrent(&startTime);
 
+        /* Get exposure parameters. */
+        getDoubleParam(ADAcquirePeriod, &acquirePeriod);
+        getDoubleParam(ADAcquireTime, &exposureTime);
+
         setIntegerParam(ADStatus, ADStatusAcquire);
 
         /* Open the shutter. */
@@ -286,8 +332,12 @@ void softDetector::startTask()
             "%s:%s: waiting for user to put waveform data\n", driverName, functionName);
 
         this->unlock();
-        printf("Waiting for image event\n");
-        epicsEventWait(this->imageEventId);
+        if (exposureTime<=0.0){
+            printf("Waiting indefintely for image event\n");
+            imageStatus = epicsEventWait(this->imageEventId);
+        } else {
+            printf("Waiting %d for image event\n", exposureTime);
+            imageStatus = epicsEventWaitWithTimeout(this->imageEventId, exposureTriIme);
         printf("Got image event\n");
         this->lock();
 
@@ -300,33 +350,37 @@ void softDetector::startTask()
         setIntegerParam(ADStatus, ADStatusReadout);
         callParamCallbacks();
 
-        pImage = this->pArrays[0];
-        /* Get current parameters. */
-        getIntegerParam(NDArrayCounter, &imageCounter);
-        getIntegerParam(ADNumImages, &numImages);
-        getIntegerParam(ADNumImagesCounter, &numImagesCounter);
-        getIntegerParam(ADImageMode, &imageMode);
-        getIntegerParam(NDArrayCallbacks, &arrayCallbacks);
-        imageCounter++;
-        numImagesCounter++;
-        setIntegerParam(NDArrayCounter, imageCounter);
-        setIntegerParam(ADNumImagesCounter, numImagesCounter);
+        if (imageStatus=epicsEventWaitTimeout){
+            asynPrint();
+        } else {
+            pImage = this->pArrays[0];
+            /* Get current parameters. */
+            getIntegerParam(NDArrayCounter, &imageCounter);
+            getIntegerParam(ADNumImages, &numImages);
+            getIntegerParam(ADNumImagesCounter, &numImagesCounter);
+            getIntegerParam(ADImageMode, &imageMode);
+            getIntegerParam(NDArrayCallbacks, &arrayCallbacks);
+            imageCounter++;
+            numImagesCounter++;
+            setIntegerParam(NDArrayCounter, imageCounter);
+            setIntegerParam(ADNumImagesCounter, numImagesCounter);
 
-        /* put the frame number and timestamp into the current buffer. */
-        pImage->uniqueId = imageCounter;
-        pImage->timeStamp = startTime.secPastEpoch+startTime.nsec/1.e9;
-        updateTimeStamp(&pImage->epicsTS);
+            /* put the frame number and timestamp into the current buffer. */
+            pImage->uniqueId = imageCounter;
+            pImage->timeStamp = startTime.secPastEpoch+startTime.nsec/1.e9;
+            updateTimeStamp(&pImage->epicsTS);
 
-        
-        this->getAttributes(pImage->pAttributeList);
-        if (arrayCallbacks) {
-            printf("Doing array callbacks\n");
-            this->unlock();
-            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
-                    "%s:%s: calling imageData callback\n", driverName, functionName);
-            doCallbacksGenericPointer(pImage, NDArrayData, 0);
-            this->lock();
-            printf("Array callbacks done\n");
+            
+            this->getAttributes(pImage->pAttributeList);
+            if (arrayCallbacks) {
+                printf("Doing array callbacks\n");
+                this->unlock();
+                asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+                        "%s:%s: calling imageData callback\n", driverName, functionName);
+                doCallbacksGenericPointer(pImage, NDArrayData, 0);
+                this->lock();
+                printf("Array callbacks done\n");
+            }
         }
 
         /* Check if acquisition is done. */
@@ -343,6 +397,25 @@ void softDetector::startTask()
 
         callParamCallbacks();
         getIntegerParam(ADAcquire, &acquire);
+
+        if (acquire)
+        {
+            epicsTimeGetCurrent(&endTime);
+            elapsedTime = epicsTimeDiffInSeconds(&endTime, &startTime);
+            delay = acquirePeriod - elapsedTime;
+            asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
+                     "%s:%s: delay=%d\n",
+                     driverName, functionName, delay);
+            if (delay>=0.0)
+            {
+                /* Set the status to readout to indicate we are in delay period  */
+                setIntegerParam(ADStatus, ADStatusWaiting);
+                callParamCallbacks();
+                this->unlock();
+                epicsEventWaitWithTimeout(this->stopEventIf, delay);
+                this->lock();
+            }
+        }
 
     }
 }
@@ -555,6 +628,8 @@ softDetector::softDetector(const char *portName, int maxSizeX, int maxSizeY,
 
     int status = asynSuccess;
     const char *functionName = "softDetector";
+    /* In append mode we need to store the pixel number to write to next.  */
+    current_pixel = 0;
 
     /* Create the epicsEvents for signaling to the acquisition task when acquisition starts and
      * stops. */
@@ -562,6 +637,13 @@ softDetector::softDetector(const char *portName, int maxSizeX, int maxSizeY,
      if (!this->startEventId)
      {
          printf("%s:%s: epicsEventCreate failure for start event\n",
+            driverName, functionName);
+         return;
+     }
+     this->stopEventId = epicsEventCreate(epicsEventEmpty);
+     if (!this->stopEventId)
+     {
+         printf("%s:%s: epicsEventCreate failure for stop event\n",
             driverName, functionName);
          return;
      }
@@ -600,6 +682,9 @@ softDetector::softDetector(const char *portName, int maxSizeX, int maxSizeY,
     status |= setDoubleParam (ADAcquirePeriod, .005);
     status |= setIntegerParam(ADNumImages, 100);
     status |= setIntegerParam(arrayMode, 0);
+    status |= setIntegerParam(arrayMode_RBV, 0);
+    status |= setIntegerParam(numElements, 1)
+    status |= setIntegerParam(numElements_RBV, 1)
 
 
     if (status) {

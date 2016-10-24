@@ -73,61 +73,6 @@ record(longin, "$(P)$(R)CurrentPixel_RBV")
 }
 
 
-record(waveform, "$(P)$(R)ArrayInInt8")
-{
-    field(DTYP, "asynInt8ArrayOut")
-    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_INT8")
-    field(NELM, "$(NELEMENTS)")
-    field(FTVL, "CHAR")
-}
-
-record(waveform, "$(P)$(R)ArrayInUInt8")
-{
-    field(DTYP, "asynInt8ArrayOut")
-    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_UINT8")
-    field(NELM, "$(NELEMENTS)")
-    field(FTVL, "UCHAR")
-}
-
-record(waveform, "$(P)$(R)ArrayInInt16")
-{
-    field(DTYP, "asynInt16ArrayOut")
-    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_INT16")
-    field(NELM, "$(NELEMENTS)")
-    field(FTVL, "SHORT")
-}
-
-record(waveform, "$(P)$(R)ArrayInUInt16")
-{
-    field(DTYP, "asynInt16ArrayOut")
-    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_UINT16")
-    field(NELM, "$(NELEMENTS)")
-    field(FTVL, "USHORT")
-}
-
-record(waveform, "$(P)$(R)ArrayInInt32")
-{
-    field(DTYP, "asynInt32ArrayOut")
-    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_INT32")
-    field(NELM, "$(NELEMENTS)")
-    field(FTVL, "LONG")
-}
-
-record(waveform, "$(P)$(R)ArrayInUInt32")
-{
-    field(DTYP, "asynInt32ArrayOut")
-    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_UINT32")
-    field(NELM, "$(NELEMENTS)")
-    field(FTVL, "ULONG")
-}
-
-record(waveform, "$(P)$(R)ArrayInFloat32")
-{
-    field(DTYP, "asynFloat32ArrayOut")
-    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))ARRAY_IN_FLOAT32")
-    field(NELM, "$(NELEMENTS)")
-    field(FTVL, "FLOAT")
-}
 record(waveform, "$(P)$(R)ArrayIn")
 {
     field(DTYP, "asynFloat64ArrayOut")

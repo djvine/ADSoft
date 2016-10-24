@@ -416,9 +416,6 @@ void softDetector::startTask()
             this->getAttributes(pImage->pAttributeList);
             if (arrayCallbacks) {
                 this->unlock();
-                epicsInt16 *ptest;
-                ptest = (epicsInt16 *) pImage->pData;
-                printf("%d\n", *ptest);
                 asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
                         "%s:%s: calling imageData callback\n", driverName, functionName);
                 doCallbacksGenericPointer(pImage, NDArrayData, 0);

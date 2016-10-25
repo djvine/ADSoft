@@ -50,12 +50,13 @@ template <typename epicsType> int softDetector::computeImage()
     int columnStep=0, rowStep=0, colorMode;
     int status = asynSuccess;
     int sizeX, sizeY;
-    int i, j, k=0;
+    int i, j, k;
+    int x, y, z;
     int i0, j0;
     int arrayModeVal; /* Overwrite (0) or append (1) */
     int numElementsVal; /* Number of elements to write in append mode */
     int currentPixelVal; /* Append beginning at this pixel */
-    int pixelCount; /* How many pixels have been written */
+    int pixelCount=0; /* How many pixels have been written */
 
     status = getIntegerParam(NDColorMode, &colorMode);
     status |= getIntegerParam(ADSizeX, &sizeX);
@@ -78,6 +79,9 @@ template <typename epicsType> int softDetector::computeImage()
             pRed   = (epicsType *)this->pArrays[0]->pData;
             pGreen = (epicsType *)this->pArrays[0]->pData+1;
             pBlue  = (epicsType *)this->pArrays[0]->pData+2;
+            x=0;
+            y=1;
+            z=2;
             break;
         case NDColorModeRGB2:
             columnStep = 1;
@@ -85,6 +89,9 @@ template <typename epicsType> int softDetector::computeImage()
             pRed   = (epicsType *)this->pArrays[0]->pData;
             pGreen = (epicsType *)this->pArrays[0]->pData+sizeX;
             pBlue  = (epicsType *)this->pArrays[0]->pData+2*sizeX;
+            x=0;
+            y=sizeX;
+            z=2*sizeX;
             break;
         case NDColorModeRGB3:
             columnStep = 1;
@@ -92,6 +99,9 @@ template <typename epicsType> int softDetector::computeImage()
             pRed   = (epicsType *)this->pArrays[0]->pData;
             pGreen = (epicsType *)this->pArrays[0]->pData+sizeX*sizeY;
             pBlue  = (epicsType *)this->pArrays[0]->pData+2*sizeX*sizeY;
+            x=0;
+            y=sizeX*sizeY;
+            z=2*sizeX*sizeY;
             break;
     }
     this->pArrays[0]->pAttributeList->add("ColorMode", "Color Mode", NDAttrInt32, &colorMode);
@@ -104,15 +114,8 @@ template <typename epicsType> int softDetector::computeImage()
         j0 = currentPixelVal % sizeX;
     }
 
-
-    pixelCount = 0;
     for (i=i0;i<sizeY;i++)
     {
-        if (arrayModeVal==1){
-            if (i<i0){
-                continue;
-            }
-        }
         switch(colorMode)
         {
             case NDColorModeMono:
@@ -124,9 +127,9 @@ template <typename epicsType> int softDetector::computeImage()
                         }
                     }
                     *(pMono+i*sizeX+j) = (epicsType) *(pRaw+i*sizeX+j);
-                    pixelCount += 1;
-                    currentPixelVal += 1;
                     if (arrayModeVal==1){
+                        pixelCount += 1; /* Track number of pixels to append */
+                        currentPixelVal += 1; /* Track global pixel number */
                         if ((currentPixelVal>=sizeX*sizeY) || /* written one full array */
                             (pixelCount>=numElementsVal)){ /* Written all requested elements */
                             /* currentPixelVal is used to determine if acquisition is completed
@@ -146,15 +149,13 @@ template <typename epicsType> int softDetector::computeImage()
                             continue;
                         }
                     }
-                    *pRed = (epicsType) *(pRaw+ k++);
-                    *pBlue = (epicsType) *(pRaw + k++);
-                    *pGreen = (epicsType) *(pRaw + k++);
-                    pRed  += columnStep;
-                    pBlue += columnStep;
-                    pBlue += columnStep;
-                    pixelCount += 1;
-                    currentPixelVal += 1;
+                    k = i*(sizeX*columnStep+rowStep)+j*columnStep;
+                    *(pRed+k)   = (epicsType) *(pRaw+k+x);
+                    *(pGreen+k) = (epicsType) *(pRaw+k+y);
+                    *(pBlue+k)  = (epicsType) *(pRaw+k+z);
                     if (arrayModeVal==1){
+                        pixelCount += 1;
+                        currentPixelVal += 1;
                         if ((currentPixelVal>=sizeX*sizeY) || /* written one full array */
                             (pixelCount>=numElementsVal)){ /* Written all requested elements */
                             /* currentPixelVal is used to determine if acquisition is completed
@@ -163,9 +164,6 @@ template <typename epicsType> int softDetector::computeImage()
                         }
                     }
                 }
-                pRed   += rowStep;
-                pGreen += rowStep;
-                pBlue  += rowStep;
                 break;
         }
     }

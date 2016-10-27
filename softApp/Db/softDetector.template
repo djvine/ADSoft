@@ -72,7 +72,25 @@ record(longin, "$(P)$(R)CurrentPixel_RBV")
     field(SCAN, "I/O Intr")
 }
 
+record(longout, "$(P)$(R)SizeZ")
+{
+    field(DTYP, "asynInt32")
+    field(OUT, "@asyn($(PORT),$(ADDR),$(TIMEOUT))SIZE_Z")
+}
 
+record(longin, "$(P)$(R)SizeZ_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))SIZE_Z_RBV")
+    field(SCAN, "I/O Intr")
+}
+
+record(longin, "$(P)$(R)MaxSizeZ_RBV")
+{
+    field(DTYP, "asynInt32")
+    field(INP, "@asyn($(PORT),$(ADDR),$(TIMEOUT))MAX_SIZE_Z_RBV")
+    field(SCAN, "I/O Intr")
+}
 record(waveform, "$(P)$(R)ArrayIn")
 {
     field(DTYP, "asynFloat64ArrayOut")

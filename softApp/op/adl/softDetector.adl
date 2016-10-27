@@ -5,10 +5,10 @@ file {
 }
 display {
 	object {
-		x=374
-		y=95
+		x=245
+		y=64
 		width=700
-		height=650
+		height=640
 	}
 	clr=14
 	bclr=4
@@ -124,7 +124,7 @@ composite {
 }
 composite {
 	object {
-		x=6
+		x=5
 		y=35
 		width=335
 		height=215
@@ -147,7 +147,7 @@ composite {
 		x=345
 		y=490
 		width=350
-		height=70
+		height=60
 	}
 	"composite name"=""
 	"composite file"="ADAttrFile.adl"
@@ -168,7 +168,7 @@ rectangle {
 		x=5
 		y=340
 		width=335
-		height=220
+		height=210
 	}
 	"basic attribute" {
 		clr=14
@@ -722,47 +722,10 @@ composite {
 	"composite name"=""
 	"composite file"="ADPlugins.adl"
 }
-composite {
-	object {
-		x=173
-		y=370
-		width=103
-		height=20
-	}
-	"composite name"=""
-	children {
-		text {
-			object {
-				x=173
-				y=370
-				width=10
-				height=20
-			}
-			"basic attribute" {
-				clr=14
-			}
-			textix="X"
-			align="horiz. right"
-		}
-		text {
-			object {
-				x=266
-				y=370
-				width=10
-				height=20
-			}
-			"basic attribute" {
-				clr=14
-			}
-			textix="Y"
-			align="horiz. right"
-		}
-	}
-}
 rectangle {
 	object {
 		x=5
-		y=564
+		y=554
 		width=690
 		height=80
 	}
@@ -774,7 +737,7 @@ rectangle {
 composite {
 	object {
 		x=297
-		y=568
+		y=558
 		width=107
 		height=21
 	}
@@ -783,7 +746,7 @@ composite {
 		rectangle {
 			object {
 				x=297
-				y=568
+				y=558
 				width=107
 				height=21
 			}
@@ -796,7 +759,7 @@ composite {
 text {
 	object {
 		x=330
-		y=568
+		y=558
 		width=40
 		height=20
 	}
@@ -808,7 +771,7 @@ text {
 }
 text {
 	object {
-		x=173
+		x=136
 		y=370
 		width=10
 		height=20
@@ -821,7 +784,7 @@ text {
 }
 text {
 	object {
-		x=266
+		x=220
 		y=370
 		width=10
 		height=20
@@ -834,9 +797,9 @@ text {
 }
 text {
 	object {
-		x=27
+		x=11
 		y=440
-		width=110
+		width=90
 		height=20
 	}
 	"basic attribute" {
@@ -847,7 +810,7 @@ text {
 }
 "text entry" {
 	object {
-		x=148
+		x=111
 		y=438
 		width=60
 		height=20
@@ -862,7 +825,7 @@ text {
 }
 "text entry" {
 	object {
-		x=241
+		x=195
 		y=438
 		width=60
 		height=20
@@ -877,7 +840,7 @@ text {
 }
 "text update" {
 	object {
-		x=148
+		x=111
 		y=418
 		width=61
 		height=18
@@ -893,7 +856,7 @@ text {
 }
 "text update" {
 	object {
-		x=241
+		x=195
 		y=418
 		width=61
 		height=18
@@ -909,9 +872,9 @@ text {
 }
 text {
 	object {
-		x=27
+		x=11
 		y=395
-		width=110
+		width=90
 		height=20
 	}
 	"basic attribute" {
@@ -922,7 +885,7 @@ text {
 }
 "text update" {
 	object {
-		x=148
+		x=111
 		y=394
 		width=61
 		height=18
@@ -938,7 +901,7 @@ text {
 }
 "text update" {
 	object {
-		x=241
+		x=195
 		y=394
 		width=61
 		height=18
@@ -955,7 +918,7 @@ text {
 text {
 	object {
 		x=34
-		y=490
+		y=475
 		width=180
 		height=20
 	}
@@ -968,7 +931,7 @@ text {
 "text update" {
 	object {
 		x=241
-		y=491
+		y=476
 		width=61
 		height=18
 	}
@@ -984,7 +947,7 @@ text {
 text {
 	object {
 		x=47
-		y=511
+		y=496
 		width=90
 		height=20
 	}
@@ -997,7 +960,7 @@ text {
 menu {
 	object {
 		x=143
-		y=511
+		y=496
 		width=80
 		height=20
 	}
@@ -1010,7 +973,7 @@ menu {
 "text update" {
 	object {
 		x=241
-		y=512
+		y=497
 		width=79
 		height=18
 	}
@@ -1026,53 +989,8 @@ menu {
 }
 text {
 	object {
-		x=37
-		y=465
-		width=100
-		height=20
-	}
-	"basic attribute" {
-		clr=14
-	}
-	textix="Array size"
-	align="horiz. right"
-}
-"text update" {
-	object {
-		x=148
-		y=466
-		width=61
-		height=18
-	}
-	monitor {
-		chan="$(P)$(R)ArraySizeX_RBV"
-		clr=54
-		bclr=4
-	}
-	align="horiz. centered"
-	limits {
-	}
-}
-"text update" {
-	object {
-		x=241
-		y=466
-		width=61
-		height=18
-	}
-	monitor {
-		chan="$(P)$(R)ArraySizeY_RBV"
-		clr=54
-		bclr=4
-	}
-	align="horiz. centered"
-	limits {
-	}
-}
-text {
-	object {
 		x=12
-		y=595
+		y=585
 		width=120
 		height=20
 	}
@@ -1085,7 +1003,7 @@ text {
 menu {
 	object {
 		x=137
-		y=595
+		y=585
 		width=80
 		height=20
 	}
@@ -1098,7 +1016,7 @@ menu {
 "text update" {
 	object {
 		x=222
-		y=595
+		y=585
 		width=79
 		height=18
 	}
@@ -1115,7 +1033,7 @@ menu {
 "text update" {
 	object {
 		x=589
-		y=597
+		y=587
 		width=79
 		height=18
 	}
@@ -1130,7 +1048,7 @@ menu {
 "text entry" {
 	object {
 		x=525
-		y=596
+		y=586
 		width=59
 		height=20
 	}
@@ -1145,7 +1063,7 @@ menu {
 text {
 	object {
 		x=420
-		y=596
+		y=586
 		width=100
 		height=20
 	}
@@ -1158,7 +1076,7 @@ text {
 text {
 	object {
 		x=421
-		y=619
+		y=609
 		width=100
 		height=20
 	}
@@ -1171,7 +1089,7 @@ text {
 "text entry" {
 	object {
 		x=526
-		y=619
+		y=609
 		width=59
 		height=20
 	}
@@ -1186,7 +1104,7 @@ text {
 "text update" {
 	object {
 		x=590
-		y=620
+		y=610
 		width=79
 		height=18
 	}
@@ -1201,7 +1119,7 @@ text {
 text {
 	object {
 		x=12
-		y=619
+		y=609
 		width=120
 		height=20
 	}
@@ -1214,7 +1132,7 @@ text {
 menu {
 	object {
 		x=137
-		y=619
+		y=609
 		width=80
 		height=20
 	}
@@ -1227,7 +1145,7 @@ menu {
 "text update" {
 	object {
 		x=222
-		y=619
+		y=609
 		width=79
 		height=18
 	}
@@ -1244,7 +1162,7 @@ menu {
 composite {
 	object {
 		x=38
-		y=537
+		y=522
 		width=283
 		height=20
 	}
@@ -1253,7 +1171,7 @@ composite {
 		text {
 			object {
 				x=38
-				y=537
+				y=522
 				width=100
 				height=20
 			}
@@ -1266,7 +1184,7 @@ composite {
 		menu {
 			object {
 				x=144
-				y=537
+				y=522
 				width=80
 				height=20
 			}
@@ -1279,7 +1197,7 @@ composite {
 		"text update" {
 			object {
 				x=242
-				y=538
+				y=523
 				width=79
 				height=18
 			}
@@ -1293,5 +1211,65 @@ composite {
 			limits {
 			}
 		}
+	}
+}
+text {
+	object {
+		x=299
+		y=370
+		width=10
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Z"
+	align="horiz. right"
+}
+"text entry" {
+	object {
+		x=274
+		y=438
+		width=60
+		height=20
+	}
+	control {
+		chan="$(P)$(R)SizeZ"
+		clr=14
+		bclr=51
+	}
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=274
+		y=418
+		width=61
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)SizeZ_RBV"
+		clr=54
+		bclr=4
+	}
+	align="horiz. centered"
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=274
+		y=394
+		width=61
+		height=18
+	}
+	monitor {
+		chan="$(P)$(R)MaxSizeZ_RBV"
+		clr=54
+		bclr=4
+	}
+	align="horiz. centered"
+	limits {
 	}
 }

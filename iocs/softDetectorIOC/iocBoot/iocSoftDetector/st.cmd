@@ -15,6 +15,8 @@ epicsEnvSet("QSIZE",  "20")
 epicsEnvSet("XSIZE",  "2000")
 # The maximum image height; used for column profiles in the NDPluginStats plugin
 epicsEnvSet("YSIZE",  "1500")
+# The maximum image depth; used for column profiles in the NDPluginStats plugin
+epicsEnvSet("ZSIZE",  "3")
 # The maximum number of time series points in the NDPluginStats plugin
 epicsEnvSet("NCHANS", "2048")
 # The maximum number of frames buffered in the NDPluginCircularBuff plugin
@@ -34,17 +36,17 @@ epicsEnvSet("EPICS_DB_INCLUDE_PATH", "$(ADCORE)/db")
 # Do not set EPICS_CA_MAX_ARRAY_BYTES to a value much larger than that required, because EPICS Channel Access actually
 # allocates arrays of this size every time it needs a buffer larger than 16K.
 # Uncomment the following line to set it in the IOC.
-epicsEnvSet("EPICS_CA_MAX_ARRAY_BYTES", "100000000")
+epicsEnvSet("EPICS_CA_MAX_ARRAY_BYTES", "200000000")
 
 # Create a softDetector driver
-# softDetectorConfig(const char *portName, int maxSizeX, int maxSizeY, 
+# softDetectorConfig(const char *portName, int maxSizeX, int maxSizeY, int maxSizeZ,
 #                   int maxBuffers, int maxMemory, int priority, int stackSize)
-softDetectorConfig("$(PORT)", $(XSIZE), $(YSIZE), 10, 0, 0)
+softDetectorConfig("$(PORT)", 2000, 2000, 3, 10, 0, 0)
 # NELEMENTS = XSIZE*YSIZE*8
 dbLoadRecords("$(ADSOFT)/db/softDetector.template","P=$(PREFIX),R=cam1:,PORT=$(PORT),ADDR=0,TIMEOUT=1,NELEMENTS=12000000")
 
 # Create a second softDetector driver
-softDetectorConfig("SOFT2", 300, 200, 1, 50, 0)
+softDetectorConfig("SOFT2", 300, 200, 1, 1, 50, 0)
 dbLoadRecords("$(ADSOFT)/db/softDetector.template","P=$(PREFIX),R=cam2:,PORT=SOFT2,ADDR=0,TIMEOUT=1,NELEMENTS=32000")
 
 # Load an NDFile database.  This is not supported for the softDetector which does not write files.

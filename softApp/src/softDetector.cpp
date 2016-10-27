@@ -49,9 +49,9 @@ template <typename epicsType> int softDetector::computeImage()
     epicsType *pMono=NULL, *pRed=NULL, *pBlue=NULL, *pGreen=NULL;
     int columnStep=0, rowStep=0, colorMode;
     int status = asynSuccess;
-    int sizeX, sizeY;
+    int sizeX, sizeY, sizeZVal;
     int i, j, k;
-    int x, y, z;
+    int x=0, y=0, z=0;
     int i0, j0;
     int arrayModeVal; /* Overwrite (0) or append (1) */
     int numElementsVal; /* Number of elements to write in append mode */
@@ -61,6 +61,7 @@ template <typename epicsType> int softDetector::computeImage()
     status = getIntegerParam(NDColorMode, &colorMode);
     status |= getIntegerParam(ADSizeX, &sizeX);
     status |= getIntegerParam(ADSizeY, &sizeY);
+    status |= getIntegerParam(SizeZ, &sizeZVal);
     status |= getIntegerParam(numElements, &numElementsVal);
     status |= getIntegerParam(arrayMode, &arrayModeVal);
     status |= getIntegerParam(currentPixel, &currentPixelVal);
@@ -72,6 +73,7 @@ template <typename epicsType> int softDetector::computeImage()
     {
         case NDColorModeMono:
             pMono = (epicsType *)this->pArrays[0]->pData;
+            columnStep = 
             break;
         case NDColorModeRGB1:
             columnStep = 3;
@@ -495,6 +497,8 @@ asynStatus softDetector::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
     int function = pasynUser->reason;
     int adstatus;
+    int maxSizeZ_RBVVal;
+    int sizeZ_RBVVal;
     asynStatus status = asynSuccess;
 
     status = setIntegerParam(function, value);
@@ -520,6 +524,14 @@ asynStatus softDetector::writeInt32(asynUser *pasynUser, epicsInt32 value)
         setIntegerParam(arrayMode_RBV, value);
     } else if (function==partialArrayCallbacks) {
         setIntegerParam(partialArrayCallbacks_RBV, value);   
+    } else if (function==sizeZ){
+        getIntegerParam(maxSizeZ_RBV, &maxSizeZ_RBVVal);
+        if ((value>=1)&&(value<=maxSizeZ_RBVVal)){
+            setIntegerParam(sizeZ_RBV, value);
+        } else {
+            getIntegerParam(sizeZ_RBV, &sizeZ_RBVVal); 
+            setIntegerParam(sizeZ, sizeZ_RBVVal);
+        }
     } else {
         if (function < FIRST_SOFT_DETECTOR_PARAM) status = ADDriver::writeInt32(pasynUser, value);
     }
@@ -541,6 +553,9 @@ asynStatus softDetector::writeInt32(asynUser *pasynUser, epicsInt32 value)
 
 /** Constructor for softDetector; most parameters are passed to ADDriver::ADDriver.
   * \param[in] portName The name of the asyn port to be created
+  * \param[in] maxSizeX Maximum number of elements in x dimension
+  * \param[in] maxSizeY Maximum number of elements in y dimension
+  * \param[in] maxSizeZ Maximum number of elements in z dimension
   * \param[in] maxBuffers The maximum number of NDArray buffers that the NDArrayPool for this driver
   *            is allowed to allocate. Set this to -1 to allow an unlimited number of buffers.
   * \param[in] maxMemory The maximum amount of memory that the NDArrayPool for this driver is 
@@ -551,7 +566,7 @@ asynStatus softDetector::writeInt32(asynUser *pasynUser, epicsInt32 value)
   *            asynFlags.
   **/
 
-softDetector::softDetector(const char *portName, int maxSizeX, int maxSizeY,
+softDetector::softDetector(const char *portName, int maxSizeX, int maxSizeY, int maxSizeZ,
                  int maxBuffers, size_t maxMemory,
                  int priority, int stackSize)
 
@@ -602,14 +617,20 @@ softDetector::softDetector(const char *portName, int maxSizeX, int maxSizeY,
     createParam(numElementsRBVString,           asynParamInt32,        &numElements_RBV);
     createParam(currentPixelString,             asynParamInt32,        &currentPixel);
     createParam(currentPixelRBVString,          asynParamInt32,        &currentPixel_RBV);
+    createParam(sizeZString,                    asynParamInt32,        &sizeZ);
+    createParam(sizeZRBVString,                 asynParamInt32,        &sizeZ_RBV);
+    createParam(maxSizeZRBVString,              asynParamInt32,        &maxSizeZ_RBV);
     createParam(arrayInString,                  asynParamFloat64Array, &arrayIn);
 
     status  = setStringParam (ADManufacturer, "Soft Detector");
     status |= setStringParam (ADModel, "Software Detector");
-    status |= setIntegerParam(ADMaxSizeX, 2000);
-    status |= setIntegerParam(ADMaxSizeY, 2000);
+    status |= setIntegerParam(ADMaxSizeX, maxSizeX);
+    status |= setIntegerParam(ADMaxSizeY, maxSizeY);
+    status |= setIntegerParam(maxSizeZ_RBV,   maxSizeZ);
     status |= setIntegerParam(ADSizeX, 256);
     status |= setIntegerParam(ADSizeY, 256);
+    status |= setIntegerParam(sizeZ, 1);
+    status |= setIntegerParam(sizeZ_RBV, 1);
     status |= setIntegerParam(NDArraySizeX, 256);
     status |= setIntegerParam(NDArraySizeY, 256);
     status |= setIntegerParam(NDArraySize, 65536); 
@@ -647,9 +668,9 @@ softDetector::softDetector(const char *portName, int maxSizeX, int maxSizeY,
     }
 }
 
-extern "C" int softDetectorConfig(const char *portName, int maxSizeX, int maxSizeY, int maxBuffers, int maxMemory, int priority, int stackSize)
+extern "C" int softDetectorConfig(const char *portName, int maxSizeX, int maxSizeY, int maxSizeZ, int maxBuffers, int maxMemory, int priority, int stackSize)
 {
-    new softDetector(portName, maxSizeX, maxSizeY,
+    new softDetector(portName, maxSizeX, maxSizeY, maxSizeZ,
                     (maxBuffers < 0) ? 0 : maxBuffers,
                     (maxMemory < 0) ? 0 : maxMemory,
                     priority, stackSize);
@@ -658,23 +679,25 @@ extern "C" int softDetectorConfig(const char *portName, int maxSizeX, int maxSiz
 
 /** Code for iocsh registration */
 static const iocshArg softDetectorConfigArg0 = {"Port name", iocshArgString};
-static const iocshArg softDetectorConfigArg1 = {"Max X size", iocshArgString};
-static const iocshArg softDetectorConfigArg2 = {"Max Y size", iocshArgString};
-static const iocshArg softDetectorConfigArg3 = {"maxBuffers", iocshArgInt};
-static const iocshArg softDetectorConfigArg4 = {"maxMemory", iocshArgInt};
-static const iocshArg softDetectorConfigArg5 = {"priority", iocshArgInt};
-static const iocshArg softDetectorConfigArg6 = {"stackSize", iocshArgInt};
+static const iocshArg softDetectorConfigArg1 = {"Max X size", iocshArgInt};
+static const iocshArg softDetectorConfigArg2 = {"Max Y size", iocshArgInt};
+static const iocshArg softDetectorConfigArg3 = {"Max Z size", iocshArgInt};
+static const iocshArg softDetectorConfigArg4 = {"maxBuffers", iocshArgInt};
+static const iocshArg softDetectorConfigArg5 = {"maxMemory", iocshArgInt};
+static const iocshArg softDetectorConfigArg6 = {"priority", iocshArgInt};
+static const iocshArg softDetectorConfigArg7 = {"stackSize", iocshArgInt};
 static const iocshArg * const softDetectorConfigArgs[] =  {&softDetectorConfigArg0,
                                                            &softDetectorConfigArg1,
                                                            &softDetectorConfigArg2,
                                                            &softDetectorConfigArg3,
                                                            &softDetectorConfigArg4,
                                                            &softDetectorConfigArg5,
-                                                           &softDetectorConfigArg6};
-static const iocshFuncDef configsoftDetector = {"softDetectorConfig", 7, softDetectorConfigArgs};
+                                                           &softDetectorConfigArg6,
+                                                           &softDetectorConfigArg7};
+static const iocshFuncDef configsoftDetector = {"softDetectorConfig", 8, softDetectorConfigArgs};
 static void configsoftDetectorCallFunc(const iocshArgBuf *args)
 {
-    softDetectorConfig(args[0].sval, args[1].ival, args[2].ival, args[3].ival, args[4].ival, args[5].ival, args[6].ival);
+    softDetectorConfig(args[0].sval, args[1].ival, args[2].ival, args[3].ival, args[4].ival, args[5].ival, args[6].ival, args[7].ival);
 }
 
 static void softDetectorRegister(void)

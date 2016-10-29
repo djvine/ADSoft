@@ -46,11 +46,11 @@ void softDetector::setShutter(int open)
 
 template <typename epicsType> int softDetector::computeImage()
 {
-    epicsType *pMono=NULL, *pRed=NULL, *pBlue=NULL, *pGreen=NULL;
-    int columnStep=0, rowStep=0, colorMode;
+    /*epicsType *pMono=NULL, *pRed=NULL, *pBlue=NULL, *pGreen=NULL;*/
+    int colorColumnStep=0, colorRowStep=0, colorMode;
     int status = asynSuccess;
     int sizeX, sizeY, sizeZVal;
-    int i, j, k;
+    int i, j, k, l;
     int x=0, y=0, z=0;
     int i0, j0;
     int arrayModeVal; /* Overwrite (0) or append (1) */
@@ -61,7 +61,7 @@ template <typename epicsType> int softDetector::computeImage()
     status = getIntegerParam(NDColorMode, &colorMode);
     status |= getIntegerParam(ADSizeX, &sizeX);
     status |= getIntegerParam(ADSizeY, &sizeY);
-    status |= getIntegerParam(SizeZ, &sizeZVal);
+    status |= getIntegerParam(sizeZ_RBV, &sizeZVal);
     status |= getIntegerParam(numElements, &numElementsVal);
     status |= getIntegerParam(arrayMode, &arrayModeVal);
     status |= getIntegerParam(currentPixel, &currentPixelVal);
@@ -69,38 +69,68 @@ template <typename epicsType> int softDetector::computeImage()
                         "%s:computeImage: error getting parameters",
                         driverName);
 
+    epicsType *pRGBArray[sizeZVal][3];
+    for (i=0;i<=sizeZVal;i++){
+        pRGBArray[i][0]=NULL;
+        pRGBArray[i][1]=NULL;
+        pRGBArray[i][2]=NULL;
+    }
+
     switch (colorMode)
     {
         case NDColorModeMono:
-            pMono = (epicsType *)this->pArrays[0]->pData;
-            columnStep = 
+            for (i=0;i<sizeZVal;i++){
+                pRGBArray[i][0] = (epicsType *)this->pArrays[0]->pData+i*sizeX*sizeY;
+            }
+            /*pMono = (epicsType *)this->pArrays[0]->pData;*/
             break;
         case NDColorModeRGB1:
-            columnStep = 3;
-            rowStep = 0;
+            colorColumnStep = 3;
+            colorRowStep = 0;
+            for (i=0;i<sizeZVal;i++){
+                pRGBArray[i][0] = (epicsType *)this->pArrays[0]->pData+i*sizeX*sizeY;
+                pRGBArray[i][1] = (epicsType *)this->pArrays[0]->pData+i*sizeX*sizeY+1;
+                pRGBArray[i][2] = (epicsType *)this->pArrays[0]->pData+i*sizeX*sizeY+2;
+            }
+            /*
             pRed   = (epicsType *)this->pArrays[0]->pData;
             pGreen = (epicsType *)this->pArrays[0]->pData+1;
             pBlue  = (epicsType *)this->pArrays[0]->pData+2;
+            */
             x=0;
             y=1;
             z=2;
             break;
         case NDColorModeRGB2:
-            columnStep = 1;
-            rowStep = 2*sizeX;
+            colorColumnStep = 1;
+            colorRowStep = 2*sizeX;
+            for (i=0;i<sizeZVal;i++){
+                pRGBArray[i][0] = (epicsType *)this->pArrays[0]->pData+i*sizeX*sizeY;
+                pRGBArray[i][1] = (epicsType *)this->pArrays[0]->pData+i*sizeX*sizeY+sizeX;
+                pRGBArray[i][2] = (epicsType *)this->pArrays[0]->pData+i*sizeX*sizeY+2*sizeX;
+            }
+            /*
             pRed   = (epicsType *)this->pArrays[0]->pData;
             pGreen = (epicsType *)this->pArrays[0]->pData+sizeX;
             pBlue  = (epicsType *)this->pArrays[0]->pData+2*sizeX;
+            */
             x=0;
             y=sizeX;
             z=2*sizeX;
             break;
         case NDColorModeRGB3:
-            columnStep = 1;
-            rowStep = 0;
+            colorColumnStep = 1;
+            colorRowStep = 0;
+            for (i=0;i<sizeZVal;i++){
+                pRGBArray[i][0] = (epicsType *)this->pArrays[0]->pData+i*sizeX*sizeY;
+                pRGBArray[i][1] = (epicsType *)this->pArrays[0]->pData+(i+1)*sizeX*sizeY;
+                pRGBArray[i][2] = (epicsType *)this->pArrays[0]->pData+(i+2)*sizeX*sizeY;
+            }
+            /*
             pRed   = (epicsType *)this->pArrays[0]->pData;
             pGreen = (epicsType *)this->pArrays[0]->pData+sizeX*sizeY;
             pBlue  = (epicsType *)this->pArrays[0]->pData+2*sizeX*sizeY;
+            */
             x=0;
             y=sizeX*sizeY;
             z=2*sizeX*sizeY;
@@ -128,7 +158,10 @@ template <typename epicsType> int softDetector::computeImage()
                             continue;
                         }
                     }
-                    *(pMono+i*sizeX+j) = (epicsType) *(pRaw+i*sizeX+j);
+                    for (l=0;l<sizeZVal;l++){
+                        *(pRGBArray[l][0]+i*sizeX+j) = (epicsType) *(pRaw+i*sizeX+j);
+                    }
+                    /**(pMono+i*sizeX+j) = (epicsType) *(pRaw+i*sizeX+j);*/
                     if (arrayModeVal==1){
                         pixelCount += 1; /* Track number of pixels to append */
                         currentPixelVal += 1; /* Track global pixel number */
@@ -151,10 +184,17 @@ template <typename epicsType> int softDetector::computeImage()
                             continue;
                         }
                     }
-                    k = i*(sizeX*columnStep+rowStep)+j*columnStep;
+                    k = i*(sizeX*colorColumnStep+colorRowStep)+j*colorColumnStep;
+                    for (l=0;l<sizeZVal;l++){
+                        *(pRGBArray[l][0]+k) = (epicsType) *(pRaw+k+x);
+                        *(pRGBArray[l][1]+k) = (epicsType) *(pRaw+k+x);
+                        *(pRGBArray[l][2]+k) = (epicsType) *(pRaw+k+x);
+                    }
+                    /*
                     *(pRed+k)   = (epicsType) *(pRaw+k+x);
                     *(pGreen+k) = (epicsType) *(pRaw+k+y);
                     *(pBlue+k)  = (epicsType) *(pRaw+k+z);
+                    */
                     if (arrayModeVal==1){
                         pixelCount += 1;
                         currentPixelVal += 1;
@@ -183,27 +223,29 @@ int softDetector::updateImage()
     int status = asynSuccess;
     NDDataType_t dataType;
     int itemp;
-    int xDim=0, yDim=1, colorDim=-1;
+    int xDim=0, yDim=1, zDim=-1, colorDim=-1;
     int arrayModeVal = 0; /* Overwrite or append */
     NDArrayInfo arrayInfo;
-    int sizeX, sizeY;
-    int maxSizeX, maxSizeY;
+    int sizeX, sizeY, sizeZVal;
+    int maxSizeX, maxSizeY, maxSizeZ;
     NDColorMode_t colorMode;
     int ndims=0;
     int currentPixelVal;
-    size_t dims[3];
+    size_t dims[4];
     NDArray *pImage = this->pArrays[0];
     const char* functionName = "updateImage";
 
     /* Get parameters from ADBase */
     callParamCallbacks();
-    status |= getIntegerParam(ADSizeX,     &sizeX);
-    status |= getIntegerParam(ADSizeY,     &sizeY);
-    status |= getIntegerParam(ADMaxSizeX,  &maxSizeX);
-    status |= getIntegerParam(ADMaxSizeY,  &maxSizeY);
-    status |= getIntegerParam(NDDataType,  &itemp); dataType = (NDDataType_t) itemp;
-    status |= getIntegerParam(NDColorMode, &itemp); colorMode = (NDColorMode_t) itemp;
-    status |= getIntegerParam(arrayMode, &arrayModeVal);
+    status |= getIntegerParam(ADSizeX,      &sizeX);
+    status |= getIntegerParam(ADSizeY,      &sizeY);
+    status |= getIntegerParam(sizeZ_RBV,    &sizeZVal);
+    status |= getIntegerParam(ADMaxSizeX,   &maxSizeX);
+    status |= getIntegerParam(ADMaxSizeY,   &maxSizeY);
+    status |= getIntegerParam(maxSizeZ_RBV, &maxSizeZ);
+    status |= getIntegerParam(NDDataType,   &itemp); dataType = (NDDataType_t) itemp;
+    status |= getIntegerParam(NDColorMode,  &itemp); colorMode = (NDColorMode_t) itemp;
+    status |= getIntegerParam(arrayMode,    &arrayModeVal);
     status |= getIntegerParam(currentPixel, &currentPixelVal);
 
     if (status) asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
@@ -219,31 +261,51 @@ int softDetector::updateImage()
         sizeY = maxSizeY;
         status |= setIntegerParam(ADSizeY, sizeY);
     }
+    if (sizeZVal > maxSizeZ) {
+        sizeZVal = maxSizeZ;
+        status |= setIntegerParam(sizeZ, sizeZVal);
+    }
 
     /* This switch is used to determine the pixel order in the array */
     switch (colorMode) {
         case NDColorModeMono:
-            ndims = 2;
             xDim = 0;
             yDim = 1;
+            ndims = 2;
+            if (sizeZVal>1){
+                ndims = 3;
+                zDim = 2;
+            }
             break;
         case NDColorModeRGB1:
             ndims = 3;
             colorDim = 0;
             xDim     = 1;
             yDim     = 2;
+            if (sizeZVal>1){
+                ndims = 4;
+                zDim = 3;
+            }
             break;
         case NDColorModeRGB2:
             ndims = 3;
             colorDim = 1;
             xDim     = 0;
             yDim     = 2;
+            if (sizeZVal>1){
+                ndims = 4;
+                zDim = 3;
+            }
             break;
         case NDColorModeRGB3:
             ndims = 3;
             colorDim = 2;
             xDim     = 0;
             yDim     = 1;
+            if (sizeZVal>1){
+                ndims = 4;
+                zDim = 3;
+            }
             break;
     }
     if (arrayModeVal==0 || currentPixelVal==0){ /* Overwrite */
@@ -252,6 +314,16 @@ int softDetector::updateImage()
         dims[xDim] = sizeX;
         dims[yDim] = sizeY;
         if (ndims > 2) dims[colorDim] = 3;
+        if (ndims == 3){
+            if (sizeZVal==1){
+                dims[colorDim] = 3;
+            } else {
+                dims[zDim] = sizeZVal;
+            }
+        } else if (ndims==4) {
+            dims[colorDim] = 3;
+            dims[zDim] = sizeZVal;
+        }
         this->pArrays[0] = this->pNDArrayPool->alloc(ndims, dims, dataType, 0, NULL);
 
         if (!this->pArrays[0]) {

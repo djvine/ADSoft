@@ -167,79 +167,9 @@ template <typename epicsType> int softDetector::computeImage()
         }
         setIntegerParam(ADSCurrentPixel, currentPixel);
         setIntegerParam(ADSCurrentPixel_RBV, currentPixel);
-        callParamCallbacks();
-    }
-
-    /*
-    if (arrayMode==0){
-        i0=0;
-        j0=0;
-    } else {
-        i0 = floor(currentPixel/sizeX);
-        j0 = currentPixel % sizeX;
-    }
-
-    for (i=i0;i<sizeY;i++)
-    {
-        switch(colorMode)
-        {
-            case NDColorModeMono:
-                for (j=0;j<sizeX;j++)
-                {
-                    if (arrayMode==1){
-                        if ((i==i0)&&(j<j0)){
-                            continue;
-                        }
-                    }
-                    for (l=0;l<sizeZ;l++){
-                        *(pMono[l]+i*sizeX+j) = (epicsType) *(pRaw+l*sizeX*sizeY+i*sizeX+j);
-                    }
-                    if (arrayMode==1){
-                        pixelCount += 1; /* Track number of pixels to append *//*
-                        currentPixel += 1; /* Track global pixel number *//*
-                        if ((currentPixel>=sizeX*sizeY) || /* written one full array *//*
-                            (pixelCount>=numElements)){ /* Written all requested elements *//*
-                            /* currentPixelVal is used to determine if acquisition is completed
-                               and is reset to zero in startTask *//*
-                            goto pixel_count_done;
-                        }
-                    }
-                }
-                break;
-            case NDColorModeRGB1:
-            case NDColorModeRGB2:
-            case NDColorModeRGB3:
-                for (j=j0;j<sizeX;j++)
-                {
-                    if (arrayMode==1){
-                        if ((i==i0)&&(j<j0)){
-                            continue;
-                        }
-                    }
-                    k = i*(sizeX*columnStep+rowStep)+j*columnStep;
-                    *(pRed+k)   = (epicsType) *(pRaw+k+x);
-                    *(pGreen+k) = (epicsType) *(pRaw+k+y);
-                    *(pBlue+k)  = (epicsType) *(pRaw+k+z);
-                    if (arrayMode==1){
-                        pixelCount += 1;
-                        currentPixel += 1;
-                        if ((currentPixel>=sizeX*sizeY) || /* written one full array *//*
-                            (pixelCount>=numElements)){ /* Written all requested elements *//*
-                            /* currentPixelVal is used to determine if acquisition is completed
-                               and is reset to zero in startTask *//*
-                            goto pixel_count_done;
-                        }
-                    }
-                }
-                break;
-        }
-    }
-pixel_count_done:*/
-    if (arrayMode==1){
-        setIntegerParam(ADSCurrentPixel, currentPixel);
-        setIntegerParam(ADSCurrentPixel_RBV, currentPixel);
     }
     callParamCallbacks();
+
     return(status);
 }
 

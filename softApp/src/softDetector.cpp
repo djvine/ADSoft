@@ -50,8 +50,7 @@ template <typename epicsType> int softDetector::computeImage()
     int columnStep=0, rowStep=0, colorMode;
     int status = asynSuccess;
     int sizeX, sizeY, sizeZ;
-    int i, j, k, l;
-    int x=0, y=0, z=0;
+    int i, j, k;
     int i0, j0;
     int arrayMode; /* Overwrite (0) or append (1) */
     int numElements; /* Number of elements to write in append mode */
@@ -80,9 +79,6 @@ template <typename epicsType> int softDetector::computeImage()
             pRed   = (epicsType *)this->pArrays[0]->pData;
             pGreen = (epicsType *)this->pArrays[0]->pData+1;
             pBlue  = (epicsType *)this->pArrays[0]->pData+2;
-            x=0;
-            y=1;
-            z=2;
             break;
         case NDColorModeRGB2:
             columnStep = 1;
@@ -90,9 +86,6 @@ template <typename epicsType> int softDetector::computeImage()
             pRed   = (epicsType *)this->pArrays[0]->pData;
             pGreen = (epicsType *)this->pArrays[0]->pData+sizeX;
             pBlue  = (epicsType *)this->pArrays[0]->pData+2*sizeX;
-            x=0;
-            y=sizeX;
-            z=2*sizeX;
             break;
         case NDColorModeRGB3:
             columnStep = 1;
@@ -100,9 +93,6 @@ template <typename epicsType> int softDetector::computeImage()
             pRed   = (epicsType *)this->pArrays[0]->pData;
             pGreen = (epicsType *)this->pArrays[0]->pData+sizeX*sizeY;
             pBlue  = (epicsType *)this->pArrays[0]->pData+2*sizeX*sizeY;
-            x=0;
-            y=sizeX*sizeY;
-            z=2*sizeX*sizeY;
             break;
     }
     this->pArrays[0]->pAttributeList->add("ColorMode", "Color Mode", NDAttrInt32, &colorMode);

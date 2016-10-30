@@ -26,21 +26,21 @@ public:
     void startTask();
 
 protected:
-    int arrayMode;                 /* 0: Overwrite, 1: Append                */
-    int arrayMode_RBV;             /* Array mode readback                    */
-    int partialArrayCallbacks;     /* 0: Disable, 1: Enable                  */
-    int partialArrayCallbacks_RBV; /* Partial array callbacks readback.      */
-    int numElements;               /* Num elements to append in Append mode. */
-    int numElements_RBV;           /* Num elements readback.                 */
-    int currentPixel;              /* Append beginning at this pixel.        */
-    int currentPixel_RBV;          /* Append beginning at this pixel.        */
-    int sizeZ;                     /* z dimension size.                      */
-    int sizeZ_RBV;                 /* z dimensions size readback.            */
-    int maxSizeZ_RBV;              /* Maximum z dimension size readback.     */
-    int arrayIn;                   /* Input array of Float64                 */
+    int ADSArrayMode;                 /* 0: Overwrite, 1: Append                */
+    int ADSArrayMode_RBV;             /* Array mode readback                    */
+    int ADSPartialArrayCallbacks;     /* 0: Disable, 1: Enable                  */
+    int ADSPartialArrayCallbacks_RBV; /* Partial array callbacks readback.      */
+    int ADSNumElements;               /* Num elements to append in Append mode. */
+    int ADSNumElements_RBV;           /* Num elements readback.                 */
+    int ADSCurrentPixel;              /* Append beginning at this pixel.        */
+    int ADSCurrentPixel_RBV;          /* Append beginning at this pixel.        */
+    int ADSSizeZ;                     /* z dimension size.                      */
+    int ADSSizeZ_RBV;                 /* z dimensions size readback.            */
+    int ADSMaxSizeZ_RBV;              /* Maximum z dimension size readback.     */
+    int ADSArrayIn;                   /* Input array of Float64                 */
 
-#define FIRST_SOFT_DETECTOR_PARAM arrayMode
-#define LAST_SOFT_DETECTOR_PARAM arrayIn
+#define FIRST_SOFT_DETECTOR_PARAM ADSArrayMode
+#define LAST_SOFT_DETECTOR_PARAM ADSArrayIn
 
 private:
     int updateImage();

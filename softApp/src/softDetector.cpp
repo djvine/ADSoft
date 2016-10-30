@@ -46,91 +46,64 @@ void softDetector::setShutter(int open)
 
 template <typename epicsType> int softDetector::computeImage()
 {
-    /*epicsType *pMono=NULL, *pRed=NULL, *pBlue=NULL, *pGreen=NULL;*/
-    int colorColumnStep=0, colorRowStep=0, colorMode;
+    epicsType *pRed=NULL, *pBlue=NULL, *pGreen=NULL;
+    int columnStep=0, rowStep=0, colorMode;
     int status = asynSuccess;
-    int sizeX, sizeY, sizeZVal;
+    int sizeX, sizeY, sizeZ;
     int i, j, k, l;
     int x=0, y=0, z=0;
     int i0, j0;
-    int arrayModeVal; /* Overwrite (0) or append (1) */
-    int numElementsVal; /* Number of elements to write in append mode */
-    int currentPixelVal; /* Append beginning at this pixel */
+    int arrayMode; /* Overwrite (0) or append (1) */
+    int numElements; /* Number of elements to write in append mode */
+    int currentPixel; /* Append beginning at this pixel */
     int pixelCount=0; /* How many pixels have been written */
 
     status = getIntegerParam(NDColorMode, &colorMode);
     status |= getIntegerParam(ADSizeX, &sizeX);
     status |= getIntegerParam(ADSizeY, &sizeY);
-    status |= getIntegerParam(sizeZ_RBV, &sizeZVal);
-    status |= getIntegerParam(numElements, &numElementsVal);
-    status |= getIntegerParam(arrayMode, &arrayModeVal);
-    status |= getIntegerParam(currentPixel, &currentPixelVal);
+    status |= getIntegerParam(ADSSizeZ_RBV, &sizeZ);
+    status |= getIntegerParam(ADSNumElements, &numElements);
+    status |= getIntegerParam(ADSArrayMode, &arrayMode);
+    status |= getIntegerParam(ADSCurrentPixel, &currentPixel);
     if (status) asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                         "%s:computeImage: error getting parameters",
                         driverName);
-
-    epicsType *pRGBArray[sizeZVal][3];
-    for (i=0;i<=sizeZVal;i++){
-        pRGBArray[i][0]=NULL;
-        pRGBArray[i][1]=NULL;
-        pRGBArray[i][2]=NULL;
-    }
+    epicsType *pMono[sizeZ];
 
     switch (colorMode)
     {
         case NDColorModeMono:
-            for (i=0;i<sizeZVal;i++){
-                pRGBArray[i][0] = (epicsType *)this->pArrays[0]->pData+i*sizeX*sizeY;
+            for (i=0;i<sizeZ;i++){
+                pMono[i] = (epicsType *)this->pArrays[0]->pData+i*sizeX*sizeY;
             }
             /*pMono = (epicsType *)this->pArrays[0]->pData;*/
             break;
         case NDColorModeRGB1:
-            colorColumnStep = 3;
-            colorRowStep = 0;
-            for (i=0;i<sizeZVal;i++){
-                pRGBArray[i][0] = (epicsType *)this->pArrays[0]->pData+i*sizeX*sizeY;
-                pRGBArray[i][1] = (epicsType *)this->pArrays[0]->pData+i*sizeX*sizeY+1;
-                pRGBArray[i][2] = (epicsType *)this->pArrays[0]->pData+i*sizeX*sizeY+2;
-            }
-            /*
+            columnStep = 3;
+            rowStep = 0;
             pRed   = (epicsType *)this->pArrays[0]->pData;
             pGreen = (epicsType *)this->pArrays[0]->pData+1;
             pBlue  = (epicsType *)this->pArrays[0]->pData+2;
-            */
             x=0;
             y=1;
             z=2;
             break;
         case NDColorModeRGB2:
-            colorColumnStep = 1;
-            colorRowStep = 2*sizeX;
-            for (i=0;i<sizeZVal;i++){
-                pRGBArray[i][0] = (epicsType *)this->pArrays[0]->pData+i*sizeX*sizeY;
-                pRGBArray[i][1] = (epicsType *)this->pArrays[0]->pData+i*sizeX*sizeY+sizeX;
-                pRGBArray[i][2] = (epicsType *)this->pArrays[0]->pData+i*sizeX*sizeY+2*sizeX;
-            }
-            /*
+            columnStep = 1;
+            rowStep = 2*sizeX;
             pRed   = (epicsType *)this->pArrays[0]->pData;
             pGreen = (epicsType *)this->pArrays[0]->pData+sizeX;
             pBlue  = (epicsType *)this->pArrays[0]->pData+2*sizeX;
-            */
             x=0;
             y=sizeX;
             z=2*sizeX;
             break;
         case NDColorModeRGB3:
-            colorColumnStep = 1;
-            colorRowStep = 0;
-            for (i=0;i<sizeZVal;i++){
-                pRGBArray[i][0] = (epicsType *)this->pArrays[0]->pData+i*sizeX*sizeY;
-                pRGBArray[i][1] = (epicsType *)this->pArrays[0]->pData+(i+1)*sizeX*sizeY;
-                pRGBArray[i][2] = (epicsType *)this->pArrays[0]->pData+(i+2)*sizeX*sizeY;
-            }
-            /*
+            columnStep = 1;
+            rowStep = 0;
             pRed   = (epicsType *)this->pArrays[0]->pData;
             pGreen = (epicsType *)this->pArrays[0]->pData+sizeX*sizeY;
             pBlue  = (epicsType *)this->pArrays[0]->pData+2*sizeX*sizeY;
-            */
             x=0;
             y=sizeX*sizeY;
             z=2*sizeX*sizeY;
@@ -138,12 +111,12 @@ template <typename epicsType> int softDetector::computeImage()
     }
     this->pArrays[0]->pAttributeList->add("ColorMode", "Color Mode", NDAttrInt32, &colorMode);
 
-    if (arrayModeVal==0){
+    if (arrayMode==0){
         i0=0;
         j0=0;
     } else {
-        i0 = floor(currentPixelVal/sizeX);
-        j0 = currentPixelVal % sizeX;
+        i0 = floor(currentPixel/sizeX);
+        j0 = currentPixel % sizeX;
     }
 
     for (i=i0;i<sizeY;i++)
@@ -153,20 +126,20 @@ template <typename epicsType> int softDetector::computeImage()
             case NDColorModeMono:
                 for (j=0;j<sizeX;j++)
                 {
-                    if (arrayModeVal==1){
+                    if (arrayMode==1){
                         if ((i==i0)&&(j<j0)){
                             continue;
                         }
                     }
-                    for (l=0;l<sizeZVal;l++){
-                        *(pRGBArray[l][0]+i*sizeX+j) = (epicsType) *(pRaw+i*sizeX+j);
+                    for (l=0;l<sizeZ;l++){
+                        *(pMono[l]+i*sizeX+j) = (epicsType) *(pRaw+l*sizeX*sizeY+i*sizeX+j);
                     }
                     /**(pMono+i*sizeX+j) = (epicsType) *(pRaw+i*sizeX+j);*/
-                    if (arrayModeVal==1){
+                    if (arrayMode==1){
                         pixelCount += 1; /* Track number of pixels to append */
-                        currentPixelVal += 1; /* Track global pixel number */
-                        if ((currentPixelVal>=sizeX*sizeY) || /* written one full array */
-                            (pixelCount>=numElementsVal)){ /* Written all requested elements */
+                        currentPixel += 1; /* Track global pixel number */
+                        if ((currentPixel>=sizeX*sizeY) || /* written one full array */
+                            (pixelCount>=numElements)){ /* Written all requested elements */
                             /* currentPixelVal is used to determine if acquisition is completed
                                and is reset to zero in startTask */
                             goto pixel_count_done;
@@ -184,22 +157,15 @@ template <typename epicsType> int softDetector::computeImage()
                             continue;
                         }
                     }
-                    k = i*(sizeX*colorColumnStep+colorRowStep)+j*colorColumnStep;
-                    for (l=0;l<sizeZVal;l++){
-                        *(pRGBArray[l][0]+k) = (epicsType) *(pRaw+k+x);
-                        *(pRGBArray[l][1]+k) = (epicsType) *(pRaw+k+x);
-                        *(pRGBArray[l][2]+k) = (epicsType) *(pRaw+k+x);
-                    }
-                    /*
+                    k = i*(sizeX*columnStep+rowStep)+j*columnStep;
                     *(pRed+k)   = (epicsType) *(pRaw+k+x);
                     *(pGreen+k) = (epicsType) *(pRaw+k+y);
                     *(pBlue+k)  = (epicsType) *(pRaw+k+z);
-                    */
-                    if (arrayModeVal==1){
+                    if (arrayMode==1){
                         pixelCount += 1;
-                        currentPixelVal += 1;
-                        if ((currentPixelVal>=sizeX*sizeY) || /* written one full array */
-                            (pixelCount>=numElementsVal)){ /* Written all requested elements */
+                        currentPixel += 1;
+                        if ((currentPixel>=sizeX*sizeY) || /* written one full array */
+                            (pixelCount>=numElements)){ /* Written all requested elements */
                             /* currentPixelVal is used to determine if acquisition is completed
                                and is reset to zero in startTask */
                             goto pixel_count_done;
@@ -210,9 +176,9 @@ template <typename epicsType> int softDetector::computeImage()
         }
     }
 pixel_count_done:
-    if (arrayModeVal==1){
-        setIntegerParam(currentPixel, currentPixelVal);
-        setIntegerParam(currentPixel_RBV, currentPixelVal);
+    if (arrayMode==1){
+        setIntegerParam(ADSCurrentPixel, currentPixel);
+        setIntegerParam(ADSCurrentPixel_RBV, currentPixel);
     }
     callParamCallbacks();
     return(status);
@@ -223,15 +189,15 @@ int softDetector::updateImage()
     int status = asynSuccess;
     NDDataType_t dataType;
     int itemp;
-    int xDim=0, yDim=1, zDim=-1, colorDim=-1;
-    int arrayModeVal = 0; /* Overwrite or append */
+    int xDim=0, yDim=1, zDim=2, colorDim=-1;
+    int arrayMode = 0; /* Overwrite or append */
     NDArrayInfo arrayInfo;
-    int sizeX, sizeY, sizeZVal;
+    int sizeX, sizeY, sizeZ;
     int maxSizeX, maxSizeY, maxSizeZ;
     NDColorMode_t colorMode;
-    int ndims=0;
-    int currentPixelVal;
-    size_t dims[4];
+    int ndims=3;
+    int currentPixel;
+    size_t dims[3];
     NDArray *pImage = this->pArrays[0];
     const char* functionName = "updateImage";
 
@@ -239,14 +205,14 @@ int softDetector::updateImage()
     callParamCallbacks();
     status |= getIntegerParam(ADSizeX,      &sizeX);
     status |= getIntegerParam(ADSizeY,      &sizeY);
-    status |= getIntegerParam(sizeZ_RBV,    &sizeZVal);
+    status |= getIntegerParam(ADSSizeZ_RBV, &sizeZ);
     status |= getIntegerParam(ADMaxSizeX,   &maxSizeX);
     status |= getIntegerParam(ADMaxSizeY,   &maxSizeY);
-    status |= getIntegerParam(maxSizeZ_RBV, &maxSizeZ);
+    status |= getIntegerParam(ADSMaxSizeZ_RBV, &maxSizeZ);
     status |= getIntegerParam(NDDataType,   &itemp); dataType = (NDDataType_t) itemp;
     status |= getIntegerParam(NDColorMode,  &itemp); colorMode = (NDColorMode_t) itemp;
-    status |= getIntegerParam(arrayMode,    &arrayModeVal);
-    status |= getIntegerParam(currentPixel, &currentPixelVal);
+    status |= getIntegerParam(ADSArrayMode,    &arrayMode);
+    status |= getIntegerParam(ADSCurrentPixel, &currentPixel);
 
     if (status) asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                         "%s:%s: error getting parameters",
@@ -261,68 +227,44 @@ int softDetector::updateImage()
         sizeY = maxSizeY;
         status |= setIntegerParam(ADSizeY, sizeY);
     }
-    if (sizeZVal > maxSizeZ) {
-        sizeZVal = maxSizeZ;
-        status |= setIntegerParam(sizeZ, sizeZVal);
+    if (sizeZ > maxSizeZ) {
+        sizeZ = maxSizeZ;
+        status |= setIntegerParam(ADSSizeZ, sizeZ);
     }
 
     /* This switch is used to determine the pixel order in the array */
     switch (colorMode) {
         case NDColorModeMono:
-            xDim = 0;
-            yDim = 1;
-            ndims = 2;
-            if (sizeZVal>1){
-                ndims = 3;
-                zDim = 2;
-            }
+            xDim  = 0;
+            yDim  = 1;
+            zDim  = 2;
             break;
         case NDColorModeRGB1:
-            ndims = 3;
             colorDim = 0;
             xDim     = 1;
             yDim     = 2;
-            if (sizeZVal>1){
-                ndims = 4;
-                zDim = 3;
-            }
             break;
         case NDColorModeRGB2:
-            ndims = 3;
             colorDim = 1;
             xDim     = 0;
             yDim     = 2;
-            if (sizeZVal>1){
-                ndims = 4;
-                zDim = 3;
-            }
             break;
         case NDColorModeRGB3:
-            ndims = 3;
             colorDim = 2;
             xDim     = 0;
             yDim     = 1;
-            if (sizeZVal>1){
-                ndims = 4;
-                zDim = 3;
-            }
             break;
     }
-    if (arrayModeVal==0 || currentPixelVal==0){ /* Overwrite */
+    if (arrayMode==0 || currentPixel==0){ /* Overwrite */
         if (this->pArrays[0]) this->pArrays[0]->release();
         /* Allocate the raw buffer we use to compute images. */
         dims[xDim] = sizeX;
         dims[yDim] = sizeY;
-        if (ndims > 2) dims[colorDim] = 3;
-        if (ndims == 3){
-            if (sizeZVal==1){
-                dims[colorDim] = 3;
-            } else {
-                dims[zDim] = sizeZVal;
-            }
-        } else if (ndims==4) {
+
+        if (colorMode==NDColorModeMono){
+            dims[zDim] = sizeZ;
+        } else {
             dims[colorDim] = 3;
-            dims[zDim] = sizeZVal;
         }
         this->pArrays[0] = this->pNDArrayPool->alloc(ndims, dims, dataType, 0, NULL);
 
@@ -368,6 +310,7 @@ int softDetector::updateImage()
     status |= setIntegerParam(NDArraySize,  (int)arrayInfo.totalBytes);
     status |= setIntegerParam(NDArraySizeX, (int)pImage->dims[xDim].size);
     status |= setIntegerParam(NDArraySizeY, (int)pImage->dims[yDim].size);
+    status |= setIntegerParam(NDArraySizeZ, (int)pImage->dims[zDim].size);
     if (status) asynPrint(this->pasynUserSelf, ASYN_TRACE_ERROR,
                     "%s:%s: error setting parameters\n",
                     driverName, functionName);
@@ -387,9 +330,9 @@ void softDetector::startTask()
     int imageCounter;
     int numImages, numImagesCounter;
     int imageMode;
-    int partialArrayCallbacksVal;
-    int arrayModeVal;
-    int currentPixelVal;
+    int partialArrayCallbacks;
+    int arrayMode;
+    int currentPixel;
     int sizeX, sizeY;
     int arrayCallbacks;
     int acquire;
@@ -398,6 +341,10 @@ void softDetector::startTask()
     double elapsedTime;
     const char* functionName = "startTask";
     NDArray *pImage;
+
+    getIntegerParam(ADSArrayMode, &arrayMode);
+    getIntegerParam(ADSCurrentPixel, &currentPixel);
+    getIntegerParam(ADSPartialArrayCallbacks, &partialArrayCallbacks);
 
     this->lock();
     /* Loop forever */
@@ -461,11 +408,11 @@ void softDetector::startTask()
         setIntegerParam(ADStatus, ADStatusReadout);
         callParamCallbacks();
 
-        getIntegerParam(partialArrayCallbacks, &partialArrayCallbacksVal);
-        if ((partialArrayCallbacksVal==1) ||
-            (arrayModeVal==0) || 
-            ((arrayModeVal==1) && 
-             (currentPixelVal>=sizeX*sizeY)))
+        getIntegerParam(ADSPartialArrayCallbacks, &partialArrayCallbacks);
+        if ((partialArrayCallbacks==1) ||
+            (arrayMode==0) || 
+            ((arrayMode==1) && 
+             (currentPixel>=sizeX*sizeY)))
         {
             pImage = this->pArrays[0];
             /* Get current parameters. */
@@ -497,8 +444,8 @@ void softDetector::startTask()
         
         getIntegerParam(ADSizeX, &sizeX);
         getIntegerParam(ADSizeY, &sizeY);
-        getIntegerParam(arrayMode, &arrayModeVal);
-        getIntegerParam(currentPixel_RBV, &currentPixelVal);
+        getIntegerParam(ADSArrayMode, &arrayMode);
+        getIntegerParam(ADSCurrentPixel_RBV, &currentPixel);
         /* Check if acquisition is done. */
         if ((imageMode==ADImageSingle) ||
             ((imageMode==ADImageMultiple) &&
@@ -506,14 +453,14 @@ void softDetector::startTask()
         {
             /* Check if we are appending values to an array. If so
                we want to collect one whole array before acquisition is completed. */
-            if ((arrayModeVal==0) || 
-                ((arrayModeVal==1) && 
-                (currentPixelVal>=sizeX*sizeY)))
+            if ((arrayMode==0) || 
+                ((arrayMode==1) && 
+                (currentPixel>=sizeX*sizeY)))
             {
                 setIntegerParam(ADAcquire, 0);
                 setIntegerParam(ADStatus, ADStatusIdle);
-                setIntegerParam(currentPixel, 0);
-                setIntegerParam(currentPixel_RBV, 0);
+                setIntegerParam(ADSCurrentPixel, 0);
+                setIntegerParam(ADSCurrentPixel_RBV, 0);
                 asynPrint(this->pasynUserSelf, ASYN_TRACE_FLOW,
                 "%s:%s: acquisition completes\n", driverName, functionName);
             }
@@ -569,8 +516,8 @@ asynStatus softDetector::writeInt32(asynUser *pasynUser, epicsInt32 value)
 {
     int function = pasynUser->reason;
     int adstatus;
-    int maxSizeZ_RBVVal;
-    int sizeZ_RBVVal;
+    int maxSizeZ;
+    int sizeZ;
     asynStatus status = asynSuccess;
 
     status = setIntegerParam(function, value);
@@ -592,17 +539,17 @@ asynStatus softDetector::writeInt32(asynUser *pasynUser, epicsInt32 value)
                 epicsEventSignal(this->stopEventId);
             }
         }
-    } else if (function==arrayMode) {
-        setIntegerParam(arrayMode_RBV, value);
-    } else if (function==partialArrayCallbacks) {
-        setIntegerParam(partialArrayCallbacks_RBV, value);   
-    } else if (function==sizeZ){
-        getIntegerParam(maxSizeZ_RBV, &maxSizeZ_RBVVal);
-        if ((value>=1)&&(value<=maxSizeZ_RBVVal)){
-            setIntegerParam(sizeZ_RBV, value);
+    } else if (function==ADSArrayMode) {
+        setIntegerParam(ADSArrayMode_RBV, value);
+    } else if (function==ADSPartialArrayCallbacks) {
+        setIntegerParam(ADSPartialArrayCallbacks_RBV, value);   
+    } else if (function==ADSSizeZ){
+        getIntegerParam(ADSMaxSizeZ_RBV, &maxSizeZ);
+        if ((value>=1)&&(value<=maxSizeZ)){
+            setIntegerParam(ADSSizeZ_RBV, value);
         } else {
-            getIntegerParam(sizeZ_RBV, &sizeZ_RBVVal); 
-            setIntegerParam(sizeZ, sizeZ_RBVVal);
+            getIntegerParam(ADSSizeZ_RBV, &sizeZ); 
+            setIntegerParam(ADSSizeZ, sizeZ);
         }
     } else {
         if (function < FIRST_SOFT_DETECTOR_PARAM) status = ADDriver::writeInt32(pasynUser, value);
@@ -681,28 +628,28 @@ softDetector::softDetector(const char *portName, int maxSizeX, int maxSizeY, int
          return;
      }
 
-    createParam(arrayModeString,                asynParamInt32,        &arrayMode);
-    createParam(arrayModeRBVString,             asynParamInt32,        &arrayMode_RBV);
-    createParam(partialArrayCallbacksString,    asynParamInt32,        &partialArrayCallbacks);
-    createParam(partialArrayCallbacksRBVString, asynParamInt32,        &partialArrayCallbacks_RBV);
-    createParam(numElementsString,              asynParamInt32,        &numElements);
-    createParam(numElementsRBVString,           asynParamInt32,        &numElements_RBV);
-    createParam(currentPixelString,             asynParamInt32,        &currentPixel);
-    createParam(currentPixelRBVString,          asynParamInt32,        &currentPixel_RBV);
-    createParam(sizeZString,                    asynParamInt32,        &sizeZ);
-    createParam(sizeZRBVString,                 asynParamInt32,        &sizeZ_RBV);
-    createParam(maxSizeZRBVString,              asynParamInt32,        &maxSizeZ_RBV);
-    createParam(arrayInString,                  asynParamFloat64Array, &arrayIn);
+    createParam(arrayModeString,                asynParamInt32,        &ADSArrayMode);
+    createParam(arrayModeRBVString,             asynParamInt32,        &ADSArrayMode_RBV);
+    createParam(partialArrayCallbacksString,    asynParamInt32,        &ADSPartialArrayCallbacks);
+    createParam(partialArrayCallbacksRBVString, asynParamInt32,        &ADSPartialArrayCallbacks_RBV);
+    createParam(numElementsString,              asynParamInt32,        &ADSNumElements);
+    createParam(numElementsRBVString,           asynParamInt32,        &ADSNumElements_RBV);
+    createParam(currentPixelString,             asynParamInt32,        &ADSCurrentPixel);
+    createParam(currentPixelRBVString,          asynParamInt32,        &ADSCurrentPixel_RBV);
+    createParam(sizeZString,                    asynParamInt32,        &ADSSizeZ);
+    createParam(sizeZRBVString,                 asynParamInt32,        &ADSSizeZ_RBV);
+    createParam(maxSizeZRBVString,              asynParamInt32,        &ADSMaxSizeZ_RBV);
+    createParam(arrayInString,                  asynParamFloat64Array, &ADSArrayIn);
 
     status  = setStringParam (ADManufacturer, "Soft Detector");
     status |= setStringParam (ADModel, "Software Detector");
     status |= setIntegerParam(ADMaxSizeX, maxSizeX);
     status |= setIntegerParam(ADMaxSizeY, maxSizeY);
-    status |= setIntegerParam(maxSizeZ_RBV,   maxSizeZ);
+    status |= setIntegerParam(ADSMaxSizeZ_RBV,   maxSizeZ);
     status |= setIntegerParam(ADSizeX, 256);
     status |= setIntegerParam(ADSizeY, 256);
-    status |= setIntegerParam(sizeZ, 1);
-    status |= setIntegerParam(sizeZ_RBV, 1);
+    status |= setIntegerParam(ADSSizeZ, 1);
+    status |= setIntegerParam(ADSSizeZ_RBV, 1);
     status |= setIntegerParam(NDArraySizeX, 256);
     status |= setIntegerParam(NDArraySizeY, 256);
     status |= setIntegerParam(NDArraySize, 65536); 
@@ -710,14 +657,14 @@ softDetector::softDetector(const char *portName, int maxSizeX, int maxSizeY, int
     status |= setDoubleParam (ADAcquireTime, .001);
     status |= setDoubleParam (ADAcquirePeriod, .005);
     status |= setIntegerParam(ADNumImages, 100);
-    status |= setIntegerParam(arrayMode, 0);
-    status |= setIntegerParam(arrayMode_RBV, 0);
-    status |= setIntegerParam(partialArrayCallbacks, 1);
-    status |= setIntegerParam(partialArrayCallbacks_RBV, 1);
-    status |= setIntegerParam(numElements, 1);
-    status |= setIntegerParam(numElements_RBV, 1);
-    status |= setIntegerParam(currentPixel, 0);
-    status |= setIntegerParam(currentPixel_RBV, 0);
+    status |= setIntegerParam(ADSArrayMode, 0);
+    status |= setIntegerParam(ADSArrayMode_RBV, 0);
+    status |= setIntegerParam(ADSPartialArrayCallbacks, 1);
+    status |= setIntegerParam(ADSPartialArrayCallbacks_RBV, 1);
+    status |= setIntegerParam(ADSNumElements, 1);
+    status |= setIntegerParam(ADSNumElements_RBV, 1);
+    status |= setIntegerParam(ADSCurrentPixel, 0);
+    status |= setIntegerParam(ADSCurrentPixel_RBV, 0);
 
 
     if (status) {

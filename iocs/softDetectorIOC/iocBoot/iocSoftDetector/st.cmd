@@ -70,7 +70,7 @@ NDStdArraysConfigure("Image2", 1, 0, "SOFT2", 0)
 
 # This creates a waveform large enough for 640x480x3 (e.g. RGB color) arrays.
 # This waveform allows transporting 64-bit images, so it can handle any detector data type at the expense of more memory and bandwidth
-dbLoadRecords("NDStdArrays.template", "P=$(PREFIX),R=image2:,PORT=Image2,ADDR=0,TIMEOUT=1,NDARRAY_PORT=SOFT2,TYPE=Float64,FTVL=DOUBLE,NELEMENTS=921600")
+dbLoadRecords("NDStdArrays.template", "P=$(PREFIX),R=image2:,PORT=Image2,ADDR=0,TIMEOUT=1,NDARRAY_PORT=SOFT2,TYPE=Float64,FTVL=DOUBLE,NELEMENTS=36000000")
 
 # Load all other plugins using commonPlugins.cmd
 < $(ADCORE)/iocBoot/commonPlugins.cmd
